@@ -1,6 +1,7 @@
-﻿using Microsoft.Extensions.Hosting;
+﻿using Microsoft.AspNetCore.Http.Extensions;
 using RabbitMQ.Client;
 using System.Text;
+using System.Text.Json;
 
 namespace ZiraLink.Server
 {
@@ -49,50 +50,22 @@ namespace ZiraLink.Server
             {
                 var response = await responseTask;
 
+                context.Response.StatusCode = (int)response.HttpStatusCode;
+
                 context.Response.ContentType = response.ContentType;
-                context.Response.Headers.Add("Content-Encoding", "UTF-8");
+                context.Response.Headers.Clear();
                 foreach (var header in response.Headers)
                 {
-                    if (header.Key == "Content-Encoding")
-                        continue;
-
-                    foreach (var headerValue in header.Value)
-                    {
-                        if (!context.Response.Headers.ContainsKey(header.Key))
-                            context.Response.Headers.Add(header.Key, headerValue);
-                        else
-                            context.Response.Headers.Append(header.Key, headerValue);
-                    }
+                    context.Response.Headers.TryAdd(header.Key, header.Value.ToArray());
                 }
 
-                if (!response.IsSuccessStatusCode)
+                if (!string.IsNullOrEmpty(response.StringContent))
                 {
-                    context.Response.StatusCode = (int)response.HttpStatusCode;
+                    await context.Response.WriteAsync(response.StringContent, Encoding.UTF8);
                 }
                 else
                 {
-                    if (new List<string>() { "image/jpg", "image/jpeg", "text/css", "text/javascript", "application/javascript" }.Contains(context.Response.ContentType))
-                    {
-                        if (response.Bytes != null && response.Bytes.Length > 0)
-                        {
-                            // Create a memory stream from the byte array
-                            var memoryStream = new MemoryStream(response.Bytes);
-
-                            // Set the response headers
-                            context.Response.ContentType = response.ContentType;
-                            context.Response.ContentLength = memoryStream.Length;
-
-                            // Write the image content to the response stream
-                            await memoryStream.CopyToAsync(context.Response.Body);
-
-                            // Close the memory stream
-                            memoryStream.Close();
-                        }
-                    }
-                    else
-                    {
-                        await context.Response.WriteAsync(Encoding.UTF8.GetString(response.Bytes));
-                    }
+                    await context.Response.Body.WriteAsync(response.Bytes);
                 }
             }
             else
@@ -145,23 +118,38 @@ namespace ZiraLink.Server
 
         private async Task<string> GetRequestDataAsync(HttpRequest request)
         {
-            using (var reader = new StreamReader(request.Body, Encoding.UTF8, true, 1024, true))
+            var requestMethod = request.Method;
+
+            var requestModel = new HttpRequestModel();
+            requestModel.RequestUrl = request.GetDisplayUrl();
+            requestModel.Method = requestMethod;
+            var headers = new List<KeyValuePair<string, IEnumerable<string>>>();
+            foreach (var header in request.Headers)
+                headers.Add(new KeyValuePair<string, IEnumerable<string>>(header.Key, header.Value));
+            requestModel.Headers = headers;
+
+            if (!HttpMethods.IsGet(requestMethod) &&
+                !HttpMethods.IsHead(requestMethod) &&
+                !HttpMethods.IsDelete(requestMethod) &&
+                !HttpMethods.IsTrace(requestMethod))
             {
-                var requestBody = await reader.ReadToEndAsync();
+                requestModel.Bytes = ReadStreamInBytes(request.Body);
+            }
 
-                // Reconstruct the full request including headers, query parameters, and path
-                var requestBuilder = new StringBuilder();
-                requestBuilder.AppendLine($"{request.Method} {request.Path}{request.QueryString} {request.Protocol}");
+            return JsonSerializer.Serialize(requestModel);
+        }
 
-                foreach (var header in request.Headers)
+        public static byte[] ReadStreamInBytes(Stream input)
+        {
+            byte[] buffer = new byte[16 * 1024];
+            using (MemoryStream ms = new MemoryStream())
+            {
+                int read;
+                while ((read = input.Read(buffer, 0, buffer.Length)) > 0)
                 {
-                    requestBuilder.AppendLine($"{header.Key}: {header.Value}");
+                    ms.Write(buffer, 0, read);
                 }
-
-                requestBuilder.AppendLine();
-                requestBuilder.AppendLine(requestBody);
-
-                return requestBuilder.ToString();
+                return ms.ToArray();
             }
         }
     }
