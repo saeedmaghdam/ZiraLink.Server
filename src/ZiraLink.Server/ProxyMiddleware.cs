@@ -70,7 +70,8 @@ namespace ZiraLink.Server
 
         private void PublishRequestToRabbitMQ(string username, string host, string internalUrl, string requestID, string requestData)
         {
-            var factory = new ConnectionFactory { HostName = "localhost", Port = 5672, UserName = "guest", Password = "guest" };
+            var factory = new ConnectionFactory();
+            factory.Uri = new Uri(Environment.GetEnvironmentVariable("ZIRALINK_CONNECTIONSTRINGS_RABBITMQ")!);
             using var connection = factory.CreateConnection();
             using var channel = connection.CreateModel();
 
