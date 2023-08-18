@@ -53,7 +53,7 @@ namespace ZiraLink.Server
             var projects = await _ziraApiClient.GetProjects(CancellationToken.None);
 
             var projectDictionary = new Dictionary<string, Project>();
-            foreach (var project in projects)
+            foreach (var project in projects.Where(x=> x.State == Enums.ProjectState.Active))
             {
                 var projectHost = project.DomainType == Enums.DomainType.Default ? $"{project.Domain}.app.ziralink.com:7001" : project.Domain;
                 projectDictionary.TryAdd(projectHost, project);
