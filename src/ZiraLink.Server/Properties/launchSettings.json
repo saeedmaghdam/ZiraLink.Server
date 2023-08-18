@@ -17,6 +17,7 @@
       "applicationUrl": "https://localhost:7001;http://localhost:7000",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development",
+        "ZIRALINK_CONNECTIONSTRINGS_RABBITMQ": "amqp://user:Pass123$@localhost:5772/",
         "ASPNETCORE_Kestrel__Certificates__Default__Password": "zira_cert",
         "ASPNETCORE_Kestrel__Certificates__Default__Path": "server.pfx"
       }

@@ -15,6 +15,7 @@ IConfiguration Configuration = new ConfigurationBuilder()
 // Add services to the container.
 builder.Services.AddSingleton<ResponseCompletionSources>();
 builder.Services.AddSingleton<ZiraApiClient>();
+builder.Services.AddSingleton<ProjectService>();
 builder.Services.AddHostedService<Worker>();
 
 var app = builder.Build();

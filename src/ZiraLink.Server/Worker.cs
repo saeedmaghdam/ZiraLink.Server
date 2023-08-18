@@ -8,16 +8,21 @@ namespace ZiraLink.Server
     public class Worker : IHostedService
     {
         private readonly ResponseCompletionSources _responseCompletionSources;
+        private readonly ProjectService _projectService;
 
-        public Worker(ResponseCompletionSources responseCompletionSources)
+        public Worker(ResponseCompletionSources responseCompletionSources, ProjectService projectService)
         {
             _responseCompletionSources = responseCompletionSources;
+            _projectService = projectService;
         }
 
-        public Task StartAsync(CancellationToken cancellationToken)
+        public async Task StartAsync(CancellationToken cancellationToken)
         {
+            await _projectService.InitializeAsync(cancellationToken);
+
             // Set up RabbitMQ connection and channels
-            var factory = new ConnectionFactory { HostName = "localhost", Port = 5672, UserName = "guest", Password = "guest" };
+            var factory = new ConnectionFactory();
+            factory.Uri = new Uri(Environment.GetEnvironmentVariable("ZIRALINK_CONNECTIONSTRINGS_RABBITMQ")!);
             var connection = factory.CreateConnection();
             var channel = connection.CreateModel();
 
@@ -58,8 +63,6 @@ namespace ZiraLink.Server
             };
 
             channel.BasicConsume(queue: queueName, autoAck: false, consumer: consumer);
-
-            return Task.CompletedTask;
         }
 
         public Task StopAsync(CancellationToken cancellationToken)

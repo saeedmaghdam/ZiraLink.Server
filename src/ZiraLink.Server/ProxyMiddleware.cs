@@ -8,15 +8,15 @@ namespace ZiraLink.Server
     public class ProxyMiddleware
     {
         private readonly ResponseCompletionSources _responseCompletionSources;
-        private readonly ZiraApiClient _ziraApiClient;
+        private readonly ProjectService _projectService;
 
         private readonly RequestDelegate _next;
 
-        public ProxyMiddleware(RequestDelegate next, ResponseCompletionSources responseCompletionSources, ZiraApiClient ziraApiClient)
+        public ProxyMiddleware(RequestDelegate next, ResponseCompletionSources responseCompletionSources, ProjectService projectService)
         {
             _next = next;
             _responseCompletionSources = responseCompletionSources;
-            _ziraApiClient = ziraApiClient;
+            _projectService = projectService;
         }
 
         public async Task Invoke(HttpContext context)
@@ -24,13 +24,7 @@ namespace ZiraLink.Server
             var requestID = Guid.NewGuid().ToString();
             var host = context.Request.Host;
 
-            var projects = await _ziraApiClient.GetProjects(CancellationToken.None);
-            var project = projects
-                .Where(x => x.State == Enums.ProjectState.Active)
-                .Where(x => x.DomainType == Enums.DomainType.Default ? $"{x.Domain}.app.ziralink.com:7001" == host.ToString() : x.Domain == host.ToString())
-                .SingleOrDefault();
-            if (project == null)
-                throw new ApplicationException("Project not found");
+            var project = _projectService.GetByHost(host.Value);
 
             // Create a TaskCompletionSource to await the response
             var responseCompletionSource = new TaskCompletionSource<HttpResponseModel>();
