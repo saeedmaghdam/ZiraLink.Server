@@ -1,5 +1,7 @@
 ﻿using System.Reflection;
 using ZiraLink.Server;
+using ZiraLink.Server.Middlewares;
+using ZiraLink.Server.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 

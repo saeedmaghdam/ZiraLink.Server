@@ -1,4 +1,4 @@
-﻿namespace ZiraLink.Server
+﻿namespace ZiraLink.Server.Models
 {
     public class HttpRequestModel
     {

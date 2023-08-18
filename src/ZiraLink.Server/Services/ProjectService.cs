@@ -2,7 +2,7 @@
 using RabbitMQ.Client.Events;
 using ZiraLink.Server.Models;
 
-namespace ZiraLink.Server
+namespace ZiraLink.Server.Services
 {
     public class ProjectService
     {
@@ -53,9 +53,9 @@ namespace ZiraLink.Server
             var projects = await _ziraApiClient.GetProjects(CancellationToken.None);
 
             var projectDictionary = new Dictionary<string, Project>();
-            foreach (var project in projects.Where(x=> x.State == Enums.ProjectState.Active))
+            foreach (var project in projects.Where(x => x.State == Enums.ProjectState.Active))
             {
-                var projectHost = project.DomainType == Enums.DomainType.Default ? $"{project.Domain}.app.ziralink.com:7001" : project.Domain;
+                var projectHost = project.DomainType == Enums.DomainType.Default ? $"{project.Domain}{Environment.GetEnvironmentVariable("ZIRALINK_DEFAULT_DOMAIN")}" : project.Domain;
                 projectDictionary.TryAdd(projectHost, project);
             }
 

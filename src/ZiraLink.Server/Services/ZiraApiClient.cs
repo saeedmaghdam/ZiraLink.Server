@@ -2,7 +2,7 @@
 using IdentityModel.Client;
 using ZiraLink.Server.Models;
 
-namespace ZiraLink.Server
+namespace ZiraLink.Server.Services
 {
     public class ZiraApiClient
     {
@@ -11,7 +11,7 @@ namespace ZiraLink.Server
             var client = new HttpClient();
 
             // discover endpoints from metadata
-            var disco = await client.GetDiscoveryDocumentAsync("https://ids.ziralink.com:5001/");
+            var disco = await client.GetDiscoveryDocumentAsync(Environment.GetEnvironmentVariable("ZIRALINK_IDS_URL"));
             if (disco.IsError)
                 throw new ApplicationException("Discovery not found");
 
@@ -31,7 +31,9 @@ namespace ZiraLink.Server
             var apiClient = new HttpClient();
             apiClient.SetBearerToken(tokenResponse.AccessToken!);
 
-            var response = await apiClient.GetAsync("https://api.ziralink.com:6001/Project/All");
+            var baseUri = new Uri(Environment.GetEnvironmentVariable("ZIRALINK_API_URL")!);
+            var uri = new Uri(baseUri, "Project/All");
+            var response = await apiClient.GetAsync(uri);
             if (!response.IsSuccessStatusCode)
                 throw new ApplicationException("Failed to get projects");
 

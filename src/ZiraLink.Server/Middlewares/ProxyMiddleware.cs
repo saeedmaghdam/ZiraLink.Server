@@ -2,8 +2,10 @@
 using RabbitMQ.Client;
 using System.Text;
 using System.Text.Json;
+using ZiraLink.Server.Models;
+using ZiraLink.Server.Services;
 
-namespace ZiraLink.Server
+namespace ZiraLink.Server.Middlewares
 {
     public class ProxyMiddleware
     {

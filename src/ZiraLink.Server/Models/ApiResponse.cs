@@ -1,4 +1,4 @@
-﻿namespace ZiraLink.Server
+﻿namespace ZiraLink.Server.Models
 {
     public class ApiResponse<T>
     {
@@ -11,10 +11,10 @@
         {
             return new ApiResponse<T>
             {
-                Data = default(T),
+                Data = default,
                 Status = true,
                 ErrorCode = 0,
-                ErrorMessage = String.Empty
+                ErrorMessage = string.Empty
             };
         }
 
@@ -25,7 +25,7 @@
                 Data = data,
                 Status = true,
                 ErrorCode = 0,
-                ErrorMessage = String.Empty
+                ErrorMessage = string.Empty
             };
         }
 
@@ -33,10 +33,10 @@
         {
             return new ApiResponse<T>
             {
-                Data = default(T),
+                Data = default,
                 Status = false,
                 ErrorCode = 9000,
-                ErrorMessage = String.Empty
+                ErrorMessage = string.Empty
             };
         }
 
@@ -44,7 +44,7 @@
         {
             return new ApiResponse<T>
             {
-                Data = default(T),
+                Data = default,
                 Status = false,
                 ErrorCode = 9000,
                 ErrorMessage = errorMessage
@@ -55,10 +55,10 @@
         {
             return new ApiResponse<T>
             {
-                Data = default(T),
+                Data = default,
                 Status = false,
                 ErrorCode = errorCode,
-                ErrorMessage = String.Empty
+                ErrorMessage = string.Empty
             };
         }
 
@@ -66,7 +66,7 @@
         {
             return new ApiResponse<T>
             {
-                Data = default(T),
+                Data = default,
                 Status = false,
                 ErrorCode = errorCode,
                 ErrorMessage = errorMessage
