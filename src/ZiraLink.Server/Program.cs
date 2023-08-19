@@ -18,13 +18,18 @@ IConfiguration Configuration = new ConfigurationBuilder()
 builder.Services.AddSingleton<ResponseCompletionSources>();
 builder.Services.AddSingleton<ZiraApiClient>();
 builder.Services.AddSingleton<ProjectService>();
+builder.Services.AddSingleton<WebSocketService>();
 builder.Services.AddHostedService<Worker>();
 
 var app = builder.Build();
 
+var webSocketService = app.Services.GetRequiredService<WebSocketService>();
+await webSocketService.InitializeConsumer();
+
 // Configure the HTTP request pipeline.
 
 app.UseHttpsRedirection();
+app.UseWebSockets();
 app.UseMiddleware<ProxyMiddleware>();
 
 app.Run();
