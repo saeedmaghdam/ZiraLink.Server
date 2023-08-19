@@ -30,7 +30,7 @@ namespace ZiraLink.Server.Middlewares
             var host = context.Request.Host;
 
             var project = _projectService.GetByHost(host.Value);
-            var projectHost = project.DomainType == Enums.DomainType.Default ? $"{project.Domain}.app.ziralink.com:7001" : project.Domain;
+            var projectHost = project.DomainType == Enums.DomainType.Default ? $"{project.Domain}{Environment.GetEnvironmentVariable("ZIRALINK_DEFAULT_DOMAIN")}" : project.Domain;
 
             if (context.WebSockets.IsWebSocketRequest)
                 await _webSocketService.Initialize(context, project, projectHost);
