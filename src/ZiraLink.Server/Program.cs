@@ -1,4 +1,5 @@
 ﻿using System.Reflection;
+using Serilog;
 using ZiraLink.Server;
 using ZiraLink.Server.Middlewares;
 using ZiraLink.Server.Services;
@@ -13,6 +14,11 @@ IConfiguration Configuration = new ConfigurationBuilder()
     .AddJsonFile("appsettings.json", false, true)
     .AddEnvironmentVariables()
     .Build();
+
+Log.Logger = new LoggerConfiguration()
+                .ReadFrom.Configuration(Configuration)
+                .CreateLogger();
+builder.Host.UseSerilog();
 
 // Add services to the container.
 builder.Services.AddSingleton<ResponseCompletionSources>();
