@@ -6,12 +6,16 @@ namespace ZiraLink.Server.Services
 {
     public class ZiraApiClient
     {
+        private readonly IConfiguration _configuration;
+
+        public ZiraApiClient(IConfiguration configuration) => _configuration = configuration;
+
         public async Task<List<Project>> GetProjects(CancellationToken cancellationToken)
         {
             var client = new HttpClient();
 
             // discover endpoints from metadata
-            var disco = await client.GetDiscoveryDocumentAsync(Environment.GetEnvironmentVariable("ZIRALINK_IDS_URL"));
+            var disco = await client.GetDiscoveryDocumentAsync(_configuration["ZIRALINK_IDS_URL"]);
             if (disco.IsError)
                 throw new ApplicationException("Discovery not found");
 
@@ -31,7 +35,7 @@ namespace ZiraLink.Server.Services
             var apiClient = new HttpClient();
             apiClient.SetBearerToken(tokenResponse.AccessToken!);
 
-            var baseUri = new Uri(Environment.GetEnvironmentVariable("ZIRALINK_API_URL")!);
+            var baseUri = new Uri(_configuration["ZIRALINK_API_URL"]!);
             var uri = new Uri(baseUri, "Project/All");
             var response = await apiClient.GetAsync(uri);
             if (!response.IsSuccessStatusCode)

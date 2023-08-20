@@ -8,9 +8,11 @@ namespace ZiraLink.Server.Services
     {
         private Dictionary<string, Project> _projects = new Dictionary<string, Project>();
         private readonly ZiraApiClient _ziraApiClient;
-        public ProjectService(ZiraApiClient ziraApiClient)
+        private readonly IConfiguration _configuration;
+        public ProjectService(ZiraApiClient ziraApiClient, IConfiguration configuration)
         {
             _ziraApiClient = ziraApiClient;
+            _configuration = configuration;
         }
 
         public Project GetByHost(string host)
@@ -22,7 +24,7 @@ namespace ZiraLink.Server.Services
         public async Task InitializeAsync(CancellationToken cancellationToken)
         {
             var factory = new ConnectionFactory();
-            factory.Uri = new Uri(Environment.GetEnvironmentVariable("ZIRALINK_CONNECTIONSTRINGS_RABBITMQ")!);
+            factory.Uri = new Uri(_configuration["ZIRALINK_CONNECTIONSTRINGS_RABBITMQ"]!);
             factory.DispatchConsumersAsync = true;
             var connection = factory.CreateConnection();
             var channel = connection.CreateModel();
@@ -55,7 +57,7 @@ namespace ZiraLink.Server.Services
             var projectDictionary = new Dictionary<string, Project>();
             foreach (var project in projects.Where(x => x.State == Enums.ProjectState.Active))
             {
-                var projectHost = project.DomainType == Enums.DomainType.Default ? $"{project.Domain}{Environment.GetEnvironmentVariable("ZIRALINK_DEFAULT_DOMAIN")}" : project.Domain;
+                var projectHost = project.DomainType == Enums.DomainType.Default ? $"{project.Domain}{_configuration["ZIRALINK_DEFAULT_DOMAIN"]}" : project.Domain;
                 projectDictionary.TryAdd(projectHost, project);
             }
 

@@ -11,11 +11,13 @@ namespace ZiraLink.Server
     {
         private readonly ResponseCompletionSources _responseCompletionSources;
         private readonly ProjectService _projectService;
+        private readonly IConfiguration _configuration;
 
-        public Worker(ResponseCompletionSources responseCompletionSources, ProjectService projectService)
+        public Worker(ResponseCompletionSources responseCompletionSources, ProjectService projectService, IConfiguration configuration)
         {
             _responseCompletionSources = responseCompletionSources;
             _projectService = projectService;
+            _configuration = configuration;
         }
 
         public async Task StartAsync(CancellationToken cancellationToken)
@@ -24,7 +26,7 @@ namespace ZiraLink.Server
 
             // Set up RabbitMQ connection and channels
             var factory = new ConnectionFactory();
-            factory.Uri = new Uri(Environment.GetEnvironmentVariable("ZIRALINK_CONNECTIONSTRINGS_RABBITMQ")!);
+            factory.Uri = new Uri(_configuration["ZIRALINK_CONNECTIONSTRINGS_RABBITMQ"]!);
             var connection = factory.CreateConnection();
             var channel = connection.CreateModel();
 

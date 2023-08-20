@@ -9,7 +9,11 @@ namespace ZiraLink.Server.Services
 {
     public class WebSocketService
     {
+        private readonly IConfiguration _configuration;
+
         private readonly Dictionary<string, WebSocket> _webSockets = new Dictionary<string, WebSocket>();
+
+        public WebSocketService(IConfiguration configuration) => _configuration = configuration;
 
         public async Task Initialize(HttpContext context, Project project, string projectHost)
         {
@@ -42,7 +46,7 @@ namespace ZiraLink.Server.Services
         {
             var factory = new ConnectionFactory();
             factory.DispatchConsumersAsync = true;
-            factory.Uri = new Uri(Environment.GetEnvironmentVariable("ZIRALINK_CONNECTIONSTRINGS_RABBITMQ")!);
+            factory.Uri = new Uri(_configuration["ZIRALINK_CONNECTIONSTRINGS_RABBITMQ"]!);
             var connection = factory.CreateConnection();
             var channel = connection.CreateModel();
 
@@ -85,7 +89,7 @@ namespace ZiraLink.Server.Services
         private void PublishWebSocketDataToRabbitMQ(string username, string projectHost, string internalUrl, string message)
         {
             var factory = new ConnectionFactory();
-            factory.Uri = new Uri(Environment.GetEnvironmentVariable("ZIRALINK_CONNECTIONSTRINGS_RABBITMQ")!);
+            factory.Uri = new Uri(_configuration["ZIRALINK_CONNECTIONSTRINGS_RABBITMQ"]!);
             using var connection = factory.CreateConnection();
             using var channel = connection.CreateModel();
 

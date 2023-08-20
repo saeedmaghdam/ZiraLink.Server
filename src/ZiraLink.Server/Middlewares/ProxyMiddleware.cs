@@ -1,6 +1,5 @@
 ﻿using Microsoft.AspNetCore.Http.Extensions;
 using RabbitMQ.Client;
-using System.Net.WebSockets;
 using System.Text;
 using System.Text.Json;
 using ZiraLink.Server.Models;
@@ -13,15 +12,17 @@ namespace ZiraLink.Server.Middlewares
         private readonly ResponseCompletionSources _responseCompletionSources;
         private readonly ProjectService _projectService;
         private readonly WebSocketService _webSocketService;
+        private readonly IConfiguration _configuration;
 
         private readonly RequestDelegate _next;
 
-        public ProxyMiddleware(RequestDelegate next, ResponseCompletionSources responseCompletionSources, ProjectService projectService, WebSocketService webSocketService)
+        public ProxyMiddleware(RequestDelegate next, ResponseCompletionSources responseCompletionSources, ProjectService projectService, WebSocketService webSocketService, IConfiguration configuration)
         {
             _next = next;
             _responseCompletionSources = responseCompletionSources;
             _projectService = projectService;
             _webSocketService = webSocketService;
+            _configuration = configuration;
         }
 
         public async Task Invoke(HttpContext context)
@@ -30,7 +31,7 @@ namespace ZiraLink.Server.Middlewares
             var host = context.Request.Host;
 
             var project = _projectService.GetByHost(host.Value);
-            var projectHost = project.DomainType == Enums.DomainType.Default ? $"{project.Domain}{Environment.GetEnvironmentVariable("ZIRALINK_DEFAULT_DOMAIN")}" : project.Domain;
+            var projectHost = project.DomainType == Enums.DomainType.Default ? $"{project.Domain}{_configuration["ZIRALINK_DEFAULT_DOMAIN"]}" : project.Domain;
 
             if (context.WebSockets.IsWebSocketRequest)
                 await _webSocketService.Initialize(context, project, projectHost);
@@ -110,7 +111,7 @@ namespace ZiraLink.Server.Middlewares
         private void PublishRequestToRabbitMQ(string username, string projectHost, string internalUrl, string requestId, string message)
         {
             var factory = new ConnectionFactory();
-            factory.Uri = new Uri(Environment.GetEnvironmentVariable("ZIRALINK_CONNECTIONSTRINGS_RABBITMQ")!);
+            factory.Uri = new Uri(_configuration["ZIRALINK_CONNECTIONSTRINGS_RABBITMQ"]!);
             using var connection = factory.CreateConnection();
             using var channel = connection.CreateModel();
 
@@ -147,7 +148,7 @@ namespace ZiraLink.Server.Middlewares
         //private void PublishWebSocketDataToRabbitMQ(string username, string projectHost, string internalUrl, string requestId, string message)
         //{
         //    var factory = new ConnectionFactory();
-        //    factory.Uri = new Uri(Environment.GetEnvironmentVariable("ZIRALINK_CONNECTIONSTRINGS_RABBITMQ")!);
+        //    factory.Uri = new Uri(_configuration["ZIRALINK_CONNECTIONSTRINGS_RABBITMQ"]!);
         //    using var connection = factory.CreateConnection();
         //    using var channel = connection.CreateModel();
 
