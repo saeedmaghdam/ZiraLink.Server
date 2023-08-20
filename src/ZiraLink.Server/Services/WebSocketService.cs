@@ -62,25 +62,30 @@ namespace ZiraLink.Server.Services
             var consumer = new AsyncEventingBasicConsumer(channel);
             consumer.Received += async (model, ea) =>
             {
-                var response = Encoding.UTF8.GetString(ea.Body.ToArray());
+                try
+                {
+                    var response = Encoding.UTF8.GetString(ea.Body.ToArray());
 
-                if (!ea.BasicProperties.Headers.TryGetValue("Host", out var hostByteArray))
-                    throw new ApplicationException("Host not found");
-                var host = Encoding.UTF8.GetString((byte[])hostByteArray);
+                    if (!ea.BasicProperties.Headers.TryGetValue("Host", out var hostByteArray))
+                        throw new ApplicationException("Host not found");
+                    var host = Encoding.UTF8.GetString((byte[])hostByteArray);
 
-                var requestModel = JsonSerializer.Deserialize<WebSocketData>(response);
-                if (!_webSockets.ContainsKey(host))
-                    throw new ApplicationException("WebSocket not found");
+                    var requestModel = JsonSerializer.Deserialize<WebSocketData>(response);
+                    if (!_webSockets.ContainsKey(host))
+                        throw new ApplicationException("WebSocket not found");
 
-                var webSocket = _webSockets[host];
+                    var webSocket = _webSockets[host];
 
-                var arraySegment = new ArraySegment<byte>(requestModel.Payload, 0, requestModel.PayloadCount);
-                await webSocket.SendAsync(arraySegment,
-                        requestModel.MessageType,
-                        requestModel.EndOfMessage,
-                        CancellationToken.None);
-
-                channel.BasicAck(ea.DeliveryTag, false);
+                    var arraySegment = new ArraySegment<byte>(requestModel.Payload, 0, requestModel.PayloadCount);
+                    await webSocket.SendAsync(arraySegment,
+                            requestModel.MessageType,
+                            requestModel.EndOfMessage,
+                            CancellationToken.None);
+                }
+                finally
+                {
+                    channel.BasicAck(ea.DeliveryTag, false);
+                }
             };
 
             channel.BasicConsume(queue: queueName, autoAck: false, consumer: consumer);

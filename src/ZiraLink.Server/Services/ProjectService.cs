@@ -40,9 +40,14 @@ namespace ZiraLink.Server.Services
             var external_bus_consumer = new AsyncEventingBasicConsumer(channel);
             external_bus_consumer.Received += async (model, ea) =>
             {
-                await UpdateProjectsAsync(cancellationToken);
-
-                channel.BasicAck(ea.DeliveryTag, false);
+                try
+                {
+                    await UpdateProjectsAsync(cancellationToken);
+                }
+                finally
+                {
+                    channel.BasicAck(ea.DeliveryTag, false);
+                }
                 await Task.Yield();
             };
 

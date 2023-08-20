@@ -54,16 +54,22 @@ namespace ZiraLink.Server
             var consumer = new EventingBasicConsumer(channel);
             consumer.Received += (model, ea) =>
             {
-                var responseID = ea.BasicProperties.MessageId;
-                //var response = Encoding.UTF8.GetString(ea.Body.ToArray());
-
-                // Retrieve the response completion source and complete it
-                if (RetrieveResponseCompletionSource(responseID, out var responseCompletionSource))
+                try
                 {
-                    var httpResponse = JsonSerializer.Deserialize<HttpResponseModel>(Encoding.UTF8.GetString(ea.Body.ToArray()));
-                    responseCompletionSource.SetResult(httpResponse);
+                    var responseID = ea.BasicProperties.MessageId;
+                    //var response = Encoding.UTF8.GetString(ea.Body.ToArray());
+
+                    // Retrieve the response completion source and complete it
+                    if (RetrieveResponseCompletionSource(responseID, out var responseCompletionSource))
+                    {
+                        var httpResponse = JsonSerializer.Deserialize<HttpResponseModel>(Encoding.UTF8.GetString(ea.Body.ToArray()));
+                        responseCompletionSource.SetResult(httpResponse);
+                    }
                 }
-                channel.BasicAck(ea.DeliveryTag, false);
+                finally
+                {
+                    channel.BasicAck(ea.DeliveryTag, false);
+                }
             };
 
             channel.BasicConsume(queue: queueName, autoAck: false, consumer: consumer);
