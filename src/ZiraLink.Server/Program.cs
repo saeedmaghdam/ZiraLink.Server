@@ -1,4 +1,5 @@
 ﻿using System.Reflection;
+using Microsoft.AspNetCore.HttpOverrides;
 using Serilog;
 using ZiraLink.Server;
 using ZiraLink.Server.Middlewares;
@@ -27,7 +28,20 @@ builder.Services.AddSingleton<ProjectService>();
 builder.Services.AddSingleton<WebSocketService>();
 builder.Services.AddHostedService<Worker>();
 
+builder.Services.Configure<ForwardedHeadersOptions>(options =>
+{
+    options.ForwardedHeaders = ForwardedHeaders.XForwardedFor |
+        ForwardedHeaders.XForwardedProto;
+    // Only loopback proxies are allowed by default.
+    // Clear that restriction because forwarders are enabled by explicit
+    // configuration.
+    options.KnownNetworks.Clear();
+    options.KnownProxies.Clear();
+});
+
 var app = builder.Build();
+
+app.Logger.LogInformation("Server Started!");
 
 var webSocketService = app.Services.GetRequiredService<WebSocketService>();
 await webSocketService.InitializeConsumer();

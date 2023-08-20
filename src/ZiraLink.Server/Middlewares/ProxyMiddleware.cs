@@ -13,16 +13,18 @@ namespace ZiraLink.Server.Middlewares
         private readonly ProjectService _projectService;
         private readonly WebSocketService _webSocketService;
         private readonly IConfiguration _configuration;
+        private readonly ILogger<ProxyMiddleware> _logger;
 
         private readonly RequestDelegate _next;
 
-        public ProxyMiddleware(RequestDelegate next, ResponseCompletionSources responseCompletionSources, ProjectService projectService, WebSocketService webSocketService, IConfiguration configuration)
+        public ProxyMiddleware(RequestDelegate next, ResponseCompletionSources responseCompletionSources, ProjectService projectService, WebSocketService webSocketService, IConfiguration configuration, ILogger<ProxyMiddleware> logger)
         {
             _next = next;
             _responseCompletionSources = responseCompletionSources;
             _projectService = projectService;
             _webSocketService = webSocketService;
             _configuration = configuration;
+            _logger = logger;
         }
 
         public async Task Invoke(HttpContext context)
@@ -62,8 +64,15 @@ namespace ZiraLink.Server.Middlewares
 
                 context.Response.ContentType = response.ContentType;
                 context.Response.Headers.Clear();
+                var excluded_headers_list = new string[]
+                {
+                    "transfer-encoding"
+                };
                 foreach (var header in response.Headers)
                 {
+                    if (excluded_headers_list.Contains(header.Key.ToLower()))
+                        continue;
+
                     context.Response.Headers.TryAdd(header.Key, header.Value.ToArray());
                 }
 
