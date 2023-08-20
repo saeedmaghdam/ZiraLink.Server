@@ -59,6 +59,11 @@ namespace ZiraLink.Server.Middlewares
             if (await Task.WhenAny(responseTask, Task.Delay(TimeSpan.FromSeconds(10))) == responseTask)
             {
                 var response = await responseTask;
+                if (response.IsRedirected)
+                {
+                    context.Response.Redirect(response.RedirectUrl, response.HttpStatusCode == System.Net.HttpStatusCode.PermanentRedirect ? true : false);
+                    return;
+                }
 
                 context.Response.StatusCode = (int)response.HttpStatusCode;
 
