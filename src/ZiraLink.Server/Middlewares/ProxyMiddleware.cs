@@ -17,8 +17,6 @@ namespace ZiraLink.Server.Middlewares
 
         private readonly RequestDelegate _next;
 
-        public ProxyMiddleware(RequestDelegate next) => _next = next;
-
         public ProxyMiddleware(RequestDelegate next, ResponseCompletionSources responseCompletionSources, ProjectService projectService, WebSocketService webSocketService, IConfiguration configuration, ILogger<ProxyMiddleware> logger)
         {
             _next = next;
