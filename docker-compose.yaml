@@ -1,0 +1,9 @@
+version: '3.7'
+
+services:
+  server:
+    image: ziralink.server
+    container_name: ziralink-server
+    build:
+      context: ./
+      dockerfile: ./src/ZiraLink.Server/Dockerfile
