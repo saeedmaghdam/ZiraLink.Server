@@ -219,19 +219,19 @@ namespace ZiraLink.Server.Middlewares
                 !HttpMethods.IsDelete(requestMethod) &&
                 !HttpMethods.IsTrace(requestMethod))
             {
-                requestModel.Bytes = ReadStreamInBytes(request.Body);
+                requestModel.Bytes = await ReadStreamInBytesAsync(request.Body);
             }
 
             return JsonSerializer.Serialize(requestModel);
         }
 
-        public static byte[] ReadStreamInBytes(Stream input)
+        public static async Task<byte[]> ReadStreamInBytesAsync(Stream input)
         {
             byte[] buffer = new byte[16 * 1024];
             using (MemoryStream ms = new MemoryStream())
             {
                 int read;
-                while ((read = input.Read(buffer, 0, buffer.Length)) > 0)
+                while ((read = await input.ReadAsync(buffer, 0, buffer.Length)) > 0)
                 {
                     ms.Write(buffer, 0, read);
                 }
