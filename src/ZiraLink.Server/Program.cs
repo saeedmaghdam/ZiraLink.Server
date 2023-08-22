@@ -50,6 +50,7 @@ await webSocketService.InitializeConsumer();
 
 app.UseHttpsRedirection();
 app.UseWebSockets();
-app.UseMiddleware<ProxyMiddleware>();
+app.UseMiddleware<HttpRequestProxyMiddleware>();
+app.UseMiddleware<WebSocketProxyMiddleware>();
 
 app.Run();

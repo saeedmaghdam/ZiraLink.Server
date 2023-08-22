@@ -1,28 +1,26 @@
 ﻿using Microsoft.AspNetCore.Http.Extensions;
 using RabbitMQ.Client;
-using System.Text;
 using System.Text.Json;
+using System.Text;
 using ZiraLink.Server.Models;
 using ZiraLink.Server.Services;
 
 namespace ZiraLink.Server.Middlewares
 {
-    public class ProxyMiddleware
+    public class HttpRequestProxyMiddleware
     {
         private readonly ResponseCompletionSources _responseCompletionSources;
         private readonly ProjectService _projectService;
-        private readonly WebSocketService _webSocketService;
         private readonly IConfiguration _configuration;
-        private readonly ILogger<ProxyMiddleware> _logger;
+        private readonly ILogger<HttpRequestProxyMiddleware> _logger;
 
         private readonly RequestDelegate _next;
 
-        public ProxyMiddleware(RequestDelegate next, ResponseCompletionSources responseCompletionSources, ProjectService projectService, WebSocketService webSocketService, IConfiguration configuration, ILogger<ProxyMiddleware> logger)
+        public HttpRequestProxyMiddleware(RequestDelegate next, ResponseCompletionSources responseCompletionSources, ProjectService projectService, IConfiguration configuration, ILogger<HttpRequestProxyMiddleware> logger)
         {
             _next = next;
             _responseCompletionSources = responseCompletionSources;
             _projectService = projectService;
-            _webSocketService = webSocketService;
             _configuration = configuration;
             _logger = logger;
         }
@@ -35,10 +33,10 @@ namespace ZiraLink.Server.Middlewares
             var project = _projectService.GetByHost(host.Value);
             var projectHost = project.DomainType == Enums.DomainType.Default ? $"{project.Domain}{_configuration["ZIRALINK_DEFAULT_DOMAIN"]}" : project.Domain;
 
-            if (context.WebSockets.IsWebSocketRequest)
-                await _webSocketService.Initialize(context, project, projectHost);
-            else
+            if (!context.WebSockets.IsWebSocketRequest)
                 await HandleHttpRequest(context, requestId, project, projectHost);
+            else
+                await _next(context);
         }
 
         private async Task HandleHttpRequest(HttpContext context, string requestId, Project project, string projectHost)
@@ -96,32 +94,6 @@ namespace ZiraLink.Server.Middlewares
             }
         }
 
-        //private async Task HandleWebSocketRequest(HttpContext context, string requestId, Project project, string projectHost)
-        //{
-        //    var socket = await context.WebSockets.AcceptWebSocketAsync();
-
-        //    var buffer = new byte[1024];
-        //    while (true)
-        //    {
-        //        var result = await socket.ReceiveAsync(new ArraySegment<byte>(buffer), default);
-        //        if (result.MessageType == WebSocketMessageType.Close)
-        //            break;
-
-        //        var webSocketData = new WebSocketData
-        //        {
-        //            Payload = buffer,
-        //            PayloadCount = result.Count,
-        //            MessageType = result.MessageType,
-        //            EndOfMessage = result.EndOfMessage
-        //        };
-
-        //        var message = JsonSerializer.Serialize(webSocketData);
-        //        PublishWebSocketDataToRabbitMQ(project.Customer.Username, projectHost, project.InternalUrl, requestId, message);
-        //    }
-
-        //    await socket.CloseAsync(WebSocketCloseStatus.NormalClosure, "Proxy closed", default);
-        //}
-
         private void PublishRequestToRabbitMQ(string username, string projectHost, string internalUrl, string requestId, string message)
         {
             var factory = new ConnectionFactory();
@@ -158,43 +130,6 @@ namespace ZiraLink.Server.Middlewares
 
             channel.BasicPublish(exchange: exchangeName, routingKey: username, basicProperties: properties, body: Encoding.UTF8.GetBytes(message));
         }
-
-        //private void PublishWebSocketDataToRabbitMQ(string username, string projectHost, string internalUrl, string requestId, string message)
-        //{
-        //    var factory = new ConnectionFactory();
-        //    factory.Uri = new Uri(_configuration["ZIRALINK_CONNECTIONSTRINGS_RABBITMQ"]!);
-        //    using var connection = factory.CreateConnection();
-        //    using var channel = connection.CreateModel();
-
-        //    var queueName = $"{username}_websocket_server_bus";
-        //    var exchangeName = "websocket_bus";
-
-        //    channel.ExchangeDeclare(exchange: exchangeName,
-        //        type: "direct",
-        //        durable: false,
-        //        autoDelete: false,
-        //        arguments: null);
-
-        //    channel.QueueDeclare(queue: queueName,
-        //             durable: false,
-        //             exclusive: false,
-        //             autoDelete: false,
-        //             arguments: null);
-
-        //    channel.QueueBind(queue: queueName,
-        //        exchange: exchangeName,
-        //        routingKey: queueName,
-        //        arguments: null);
-
-        //    var properties = channel.CreateBasicProperties();
-        //    properties.MessageId = requestId;
-        //    var headers = new Dictionary<string, object>();
-        //    headers.Add("IntUrl", internalUrl);
-        //    headers.Add("Host", projectHost);
-        //    properties.Headers = headers;
-
-        //    channel.BasicPublish(exchange: exchangeName, routingKey: queueName, basicProperties: properties, body: Encoding.UTF8.GetBytes(message));
-        //}
 
         private void StoreResponseCompletionSource(string requestID, TaskCompletionSource<HttpResponseModel> responseCompletionSource)
         {
