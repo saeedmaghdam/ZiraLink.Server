@@ -13,6 +13,8 @@ namespace ZiraLink.Server.Middlewares
         private readonly ProjectService _projectService;
         private readonly IConfiguration _configuration;
         private readonly ILogger<HttpRequestProxyMiddleware> _logger;
+        private IModel _channel;
+        private Dictionary<string, bool> _initializedQueues = new Dictionary<string, bool>();
 
         private readonly RequestDelegate _next;
 
@@ -23,6 +25,8 @@ namespace ZiraLink.Server.Middlewares
             _projectService = projectService;
             _configuration = configuration;
             _logger = logger;
+
+            InitializeRabbitMq();
         }
 
         public async Task Invoke(HttpContext context)
@@ -94,41 +98,49 @@ namespace ZiraLink.Server.Middlewares
             }
         }
 
-        private void PublishRequestToRabbitMQ(string username, string projectHost, string internalUrl, string requestId, string message)
+        private void InitializeRabbitMq()
         {
             var factory = new ConnectionFactory();
             factory.Uri = new Uri(_configuration["ZIRALINK_CONNECTIONSTRINGS_RABBITMQ"]!);
-            using var connection = factory.CreateConnection();
-            using var channel = connection.CreateModel();
+            var connection = factory.CreateConnection();
+            _channel = connection.CreateModel();
+        }
 
+        private void PublishRequestToRabbitMQ(string username, string projectHost, string internalUrl, string requestId, string message)
+        {
             var queueName = $"{username}_request_bus";
             var exchangeName = "request";
 
-            channel.ExchangeDeclare(exchange: exchangeName,
-                type: "direct",
-                durable: false,
-                autoDelete: false,
-                arguments: null);
+            if (!_initializedQueues.ContainsKey(username))
+            {
+                _channel.ExchangeDeclare(exchange: exchangeName,
+                    type: "direct",
+                    durable: false,
+                    autoDelete: false,
+                    arguments: null);
 
-            channel.QueueDeclare(queue: queueName,
-                     durable: false,
-                     exclusive: false,
-                     autoDelete: false,
-                     arguments: null);
+                _channel.QueueDeclare(queue: queueName,
+                         durable: false,
+                         exclusive: false,
+                         autoDelete: false,
+                         arguments: null);
 
-            channel.QueueBind(queue: queueName,
-                exchange: exchangeName,
-                routingKey: username,
-                arguments: null);
+                _channel.QueueBind(queue: queueName,
+                    exchange: exchangeName,
+                    routingKey: username,
+                    arguments: null);
 
-            var properties = channel.CreateBasicProperties();
+                _initializedQueues.Add(username, true);
+            }
+
+            var properties = _channel.CreateBasicProperties();
             properties.MessageId = requestId;
             var headers = new Dictionary<string, object>();
             headers.Add("IntUrl", internalUrl);
             headers.Add("Host", projectHost);
             properties.Headers = headers;
 
-            channel.BasicPublish(exchange: exchangeName, routingKey: username, basicProperties: properties, body: Encoding.UTF8.GetBytes(message));
+            _channel.BasicPublish(exchange: exchangeName, routingKey: username, basicProperties: properties, body: Encoding.UTF8.GetBytes(message));
         }
 
         private void StoreResponseCompletionSource(string requestID, TaskCompletionSource<HttpResponseModel> responseCompletionSource)
