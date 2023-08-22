@@ -58,7 +58,7 @@ namespace ZiraLink.Server.Middlewares
 
             // Wait for the response or timeout
             var responseTask = responseCompletionSource.Task;
-            if (await Task.WhenAny(responseTask, Task.Delay(TimeSpan.FromSeconds(10))) == responseTask)
+            if (await Task.WhenAny(responseTask, Task.Delay(TimeSpan.FromSeconds(100))) == responseTask)
             {
                 var response = await responseTask;
                 if (response.IsRedirected)
