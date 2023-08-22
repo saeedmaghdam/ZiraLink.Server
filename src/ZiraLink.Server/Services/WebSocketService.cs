@@ -20,26 +20,31 @@ namespace ZiraLink.Server.Services
             var socket = await context.WebSockets.AcceptWebSocketAsync();
             _webSockets.Add(projectHost, socket);
 
-            var buffer = new byte[1024];
-            while (true)
+            try
             {
-                var result = await socket.ReceiveAsync(new ArraySegment<byte>(buffer), default);
-                if (result.MessageType == WebSocketMessageType.Close)
-                    break;
-
-                var webSocketData = new WebSocketData
+                var buffer = new byte[1024];
+                while (true)
                 {
-                    Payload = buffer,
-                    PayloadCount = result.Count,
-                    MessageType = result.MessageType,
-                    EndOfMessage = result.EndOfMessage
-                };
+                    var result = await socket.ReceiveAsync(new ArraySegment<byte>(buffer), default);
+                    if (result.MessageType == WebSocketMessageType.Close)
+                        break;
 
-                var message = JsonSerializer.Serialize(webSocketData);
-                PublishWebSocketDataToRabbitMQ(project.Customer.Username, projectHost, project.InternalUrl, message);
+                    var webSocketData = new WebSocketData
+                    {
+                        Payload = buffer,
+                        PayloadCount = result.Count,
+                        MessageType = result.MessageType,
+                        EndOfMessage = result.EndOfMessage
+                    };
+
+                    var message = JsonSerializer.Serialize(webSocketData);
+                    PublishWebSocketDataToRabbitMQ(project.Customer.Username, projectHost, project.InternalUrl, message);
+                }
             }
-
-            _webSockets.Remove(projectHost);
+            finally
+            {
+                _webSockets.Remove(projectHost);
+            }
         }
 
         public async Task InitializeConsumer()
