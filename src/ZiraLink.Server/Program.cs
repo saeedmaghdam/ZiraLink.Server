@@ -41,10 +41,7 @@ builder.Services.Configure<ForwardedHeadersOptions>(options =>
 
 var app = builder.Build();
 
-app.Logger.LogInformation("Server Started!");
-
-var webSocketService = app.Services.GetRequiredService<WebSocketService>();
-await webSocketService.InitializeConsumer();
+await app.Services.GetRequiredService<WebSocketService>().InitializeConsumer();
 
 // Configure the HTTP request pipeline.
 
