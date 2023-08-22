@@ -10,15 +10,20 @@ namespace ZiraLink.Server.Services
     public class WebSocketService
     {
         private readonly IConfiguration _configuration;
+        private IModel _channel;
 
         private readonly Dictionary<string, WebSocket> _webSockets = new Dictionary<string, WebSocket>();
 
-        public WebSocketService(IConfiguration configuration) => _configuration = configuration;
+        public WebSocketService(IConfiguration configuration)
+        {
+            _configuration = configuration;
+        }
 
         public async Task Initialize(HttpContext context, Project project, string projectHost)
         {
             var socket = await context.WebSockets.AcceptWebSocketAsync();
             _webSockets.Add(projectHost, socket);
+            InitializeRabbitMq(project.Customer.Username);
 
             try
             {
@@ -47,24 +52,24 @@ namespace ZiraLink.Server.Services
             }
         }
 
-        public async Task InitializeConsumer()
+        public void InitializeConsumer()
         {
             var factory = new ConnectionFactory();
             factory.DispatchConsumersAsync = true;
             factory.Uri = new Uri(_configuration["ZIRALINK_CONNECTIONSTRINGS_RABBITMQ"]!);
             var connection = factory.CreateConnection();
-            var channel = connection.CreateModel();
+            _channel = connection.CreateModel();
 
             var queueName = "websocket_client_bus";
 
-            channel.QueueDeclare(queue: queueName,
+            _channel.QueueDeclare(queue: queueName,
                      durable: false,
                      exclusive: false,
                      autoDelete: false,
                      arguments: null);
 
             // Start consuming responses
-            var consumer = new AsyncEventingBasicConsumer(channel);
+            var consumer = new AsyncEventingBasicConsumer(_channel);
             consumer.Received += async (model, ea) =>
             {
                 try
@@ -89,47 +94,48 @@ namespace ZiraLink.Server.Services
                 }
                 finally
                 {
-                    channel.BasicAck(ea.DeliveryTag, false);
+                    _channel.BasicAck(ea.DeliveryTag, false);
                 }
             };
 
-            channel.BasicConsume(queue: queueName, autoAck: false, consumer: consumer);
+            _channel.BasicConsume(queue: queueName, autoAck: false, consumer: consumer);
         }
 
-        private void PublishWebSocketDataToRabbitMQ(string username, string projectHost, string internalUrl, string message)
+        private void InitializeRabbitMq(string username)
         {
-            var factory = new ConnectionFactory();
-            factory.Uri = new Uri(_configuration["ZIRALINK_CONNECTIONSTRINGS_RABBITMQ"]!);
-            using var connection = factory.CreateConnection();
-            using var channel = connection.CreateModel();
-
             var queueName = $"{username}_websocket_server_bus";
             var exchangeName = "websocket_bus";
 
-            channel.ExchangeDeclare(exchange: exchangeName,
+            _channel.ExchangeDeclare(exchange: exchangeName,
                 type: "direct",
                 durable: false,
                 autoDelete: false,
                 arguments: null);
 
-            channel.QueueDeclare(queue: queueName,
+            _channel.QueueDeclare(queue: queueName,
                      durable: false,
                      exclusive: false,
                      autoDelete: false,
                      arguments: null);
 
-            channel.QueueBind(queue: queueName,
+            _channel.QueueBind(queue: queueName,
                 exchange: exchangeName,
                 routingKey: queueName,
                 arguments: null);
+        }
 
-            var properties = channel.CreateBasicProperties();
+        private void PublishWebSocketDataToRabbitMQ(string username, string projectHost, string internalUrl, string message)
+        {
+            var queueName = $"{username}_websocket_server_bus";
+            var exchangeName = "websocket_bus";
+
+            var properties = _channel.CreateBasicProperties();
             var headers = new Dictionary<string, object>();
             headers.Add("IntUrl", internalUrl);
             headers.Add("Host", projectHost);
             properties.Headers = headers;
 
-            channel.BasicPublish(exchange: exchangeName, routingKey: queueName, basicProperties: properties, body: Encoding.UTF8.GetBytes(message));
+            _channel.BasicPublish(exchange: exchangeName, routingKey: queueName, basicProperties: properties, body: Encoding.UTF8.GetBytes(message));
         }
     }
 }
