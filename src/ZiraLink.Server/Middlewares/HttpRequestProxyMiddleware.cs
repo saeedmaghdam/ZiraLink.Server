@@ -13,20 +13,19 @@ namespace ZiraLink.Server.Middlewares
         private readonly ProjectService _projectService;
         private readonly IConfiguration _configuration;
         private readonly ILogger<HttpRequestProxyMiddleware> _logger;
-        private IModel _channel;
+        private readonly IModel _channel;
         private Dictionary<string, bool> _initializedQueues = new Dictionary<string, bool>();
 
         private readonly RequestDelegate _next;
 
-        public HttpRequestProxyMiddleware(RequestDelegate next, ResponseCompletionSources responseCompletionSources, ProjectService projectService, IConfiguration configuration, ILogger<HttpRequestProxyMiddleware> logger)
+        public HttpRequestProxyMiddleware(RequestDelegate next, ResponseCompletionSources responseCompletionSources, ProjectService projectService, IConfiguration configuration, ILogger<HttpRequestProxyMiddleware> logger, IModel channel)
         {
             _next = next;
             _responseCompletionSources = responseCompletionSources;
             _projectService = projectService;
             _configuration = configuration;
             _logger = logger;
-
-            InitializeRabbitMq();
+            _channel = channel;
         }
 
         public async Task Invoke(HttpContext context)
@@ -96,14 +95,6 @@ namespace ZiraLink.Server.Middlewares
             {
                 context.Response.StatusCode = StatusCodes.Status504GatewayTimeout;
             }
-        }
-
-        private void InitializeRabbitMq()
-        {
-            var factory = new ConnectionFactory();
-            factory.Uri = new Uri(_configuration["ZIRALINK_CONNECTIONSTRINGS_RABBITMQ"]!);
-            var connection = factory.CreateConnection();
-            _channel = connection.CreateModel();
         }
 
         private void PublishRequestToRabbitMQ(string username, string projectHost, string internalUrl, string requestId, string message)

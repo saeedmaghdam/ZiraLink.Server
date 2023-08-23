@@ -9,14 +9,13 @@ namespace ZiraLink.Server.Services
 {
     public class WebSocketService
     {
-        private readonly IConfiguration _configuration;
-        private IModel _channel;
+        private readonly IModel _channel;
 
         private readonly Dictionary<string, WebSocket> _webSockets = new Dictionary<string, WebSocket>();
 
-        public WebSocketService(IConfiguration configuration)
+        public WebSocketService(IModel channel)
         {
-            _configuration = configuration;
+            _channel = channel;
         }
 
         public async Task Initialize(HttpContext context, Project project, string projectHost)
@@ -54,12 +53,6 @@ namespace ZiraLink.Server.Services
 
         public void InitializeConsumer()
         {
-            var factory = new ConnectionFactory();
-            factory.DispatchConsumersAsync = true;
-            factory.Uri = new Uri(_configuration["ZIRALINK_CONNECTIONSTRINGS_RABBITMQ"]!);
-            var connection = factory.CreateConnection();
-            _channel = connection.CreateModel();
-
             var queueName = "websocket_client_bus";
 
             _channel.QueueDeclare(queue: queueName,

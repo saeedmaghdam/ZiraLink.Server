@@ -1,5 +1,6 @@
 ﻿using System.Reflection;
 using Microsoft.AspNetCore.HttpOverrides;
+using RabbitMQ.Client;
 using Serilog;
 using ZiraLink.Server;
 using ZiraLink.Server.Middlewares;
@@ -22,6 +23,18 @@ Log.Logger = new LoggerConfiguration()
 builder.Host.UseSerilog();
 
 // Add services to the container.
+builder.Services.AddMemoryCache();
+
+builder.Services.AddSingleton(serviceProvider =>
+{
+    var factory = new ConnectionFactory();
+    factory.DispatchConsumersAsync = true;
+    factory.Uri = new Uri(Configuration["ZIRALINK_CONNECTIONSTRINGS_RABBITMQ"]!);
+    var connection = factory.CreateConnection();
+    var channel = connection.CreateModel();
+
+    return channel;
+});
 builder.Services.AddSingleton<ResponseCompletionSources>();
 builder.Services.AddSingleton<ZiraApiClient>();
 builder.Services.AddSingleton<ProjectService>();

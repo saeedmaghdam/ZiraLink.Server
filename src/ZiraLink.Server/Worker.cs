@@ -11,48 +11,42 @@ namespace ZiraLink.Server
     {
         private readonly ResponseCompletionSources _responseCompletionSources;
         private readonly ProjectService _projectService;
-        private readonly IConfiguration _configuration;
+        private readonly IModel _channel;
 
-        public Worker(ResponseCompletionSources responseCompletionSources, ProjectService projectService, IConfiguration configuration)
+        public Worker(ResponseCompletionSources responseCompletionSources, ProjectService projectService, IModel channel)
         {
             _responseCompletionSources = responseCompletionSources;
             _projectService = projectService;
-            _configuration = configuration;
+            _channel = channel;
         }
 
         public async Task StartAsync(CancellationToken cancellationToken)
         {
             await _projectService.InitializeAsync(cancellationToken);
 
-            // Set up RabbitMQ connection and channels
-            var factory = new ConnectionFactory();
-            factory.Uri = new Uri(_configuration["ZIRALINK_CONNECTIONSTRINGS_RABBITMQ"]!);
-            var connection = factory.CreateConnection();
-            var channel = connection.CreateModel();
-
             var queueName = $"response_bus";
             var exchangeName = "response";
 
-            channel.ExchangeDeclare(exchange: exchangeName,
+            _channel.ExchangeDeclare(exchange: exchangeName,
                 type: "direct",
                 durable: false,
                 autoDelete: false,
                 arguments: null);
 
-            channel.QueueDeclare(queue: queueName,
+            _channel.QueueDeclare(queue: queueName,
                      durable: false,
                      exclusive: false,
                      autoDelete: false,
                      arguments: null);
 
-            channel.QueueBind(queue: queueName,
+            _channel.QueueBind(queue: queueName,
                exchange: exchangeName,
                routingKey: "",
                arguments: null);
 
             // Start consuming responses
-            var consumer = new EventingBasicConsumer(channel);
-            consumer.Received += (model, ea) =>
+            var consumer = new AsyncEventingBasicConsumer(_channel);
+            consumer.Received += async (model, ea) =>
             {
                 try
                 {
@@ -68,11 +62,11 @@ namespace ZiraLink.Server
                 }
                 finally
                 {
-                    channel.BasicAck(ea.DeliveryTag, false);
+                    _channel.BasicAck(ea.DeliveryTag, false);
                 }
             };
 
-            channel.BasicConsume(queue: queueName, autoAck: false, consumer: consumer);
+            _channel.BasicConsume(queue: queueName, autoAck: false, consumer: consumer);
         }
 
         public Task StopAsync(CancellationToken cancellationToken)

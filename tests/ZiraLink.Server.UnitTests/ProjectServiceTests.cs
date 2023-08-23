@@ -12,7 +12,7 @@ namespace ZiraLink.Server.UnitTests
         {
             // Arrange
             var memoryCacheMock = new Mock<IMemoryCache>();
-            var projectService = new ProjectService(null, null, memoryCacheMock.Object);
+            var projectService = new ProjectService(null, null, memoryCacheMock.Object, null);
 
             // Act
             var action = () => projectService.GetByHost("aghdam.nl");
@@ -27,7 +27,7 @@ namespace ZiraLink.Server.UnitTests
         {
             // Arrange
             var memoryCacheMock = new Mock<IMemoryCache>();
-            var projectService = new ProjectService(null, null, memoryCacheMock.Object);
+            var projectService = new ProjectService(null, null, memoryCacheMock.Object, null);
 
             // Act
             var action = () => projectService.GetByHost("");
@@ -45,7 +45,7 @@ namespace ZiraLink.Server.UnitTests
 
             var projectViewId = Guid.NewGuid();
             memoryCacheMock.Setup(m => m.TryGetValue(It.IsAny<object>(), out It.Ref<object?>.IsAny)).Returns(true);
-            var projectService = new ProjectService(null, null, memoryCacheMock.Object);
+            var projectService = new ProjectService(null, null, memoryCacheMock.Object, null);
 
             // Act
             var action = () => projectService.GetByHost("aghdam.nl");

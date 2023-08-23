@@ -10,11 +10,14 @@ namespace ZiraLink.Server.Services
         private readonly IMemoryCache _memoryCache;
         private readonly ZiraApiClient _ziraApiClient;
         private readonly IConfiguration _configuration;
-        public ProjectService(ZiraApiClient ziraApiClient, IConfiguration configuration, IMemoryCache memoryCache)
+        private readonly IModel _channel;
+
+        public ProjectService(ZiraApiClient ziraApiClient, IConfiguration configuration, IMemoryCache memoryCache, IModel channel)
         {
             _ziraApiClient = ziraApiClient;
             _configuration = configuration;
             _memoryCache = memoryCache;
+            _channel = channel;
         }
 
         public Project GetByHost(string host)
@@ -28,21 +31,15 @@ namespace ZiraLink.Server.Services
 
         public async Task InitializeAsync(CancellationToken cancellationToken)
         {
-            var factory = new ConnectionFactory();
-            factory.Uri = new Uri(_configuration["ZIRALINK_CONNECTIONSTRINGS_RABBITMQ"]!);
-            factory.DispatchConsumersAsync = true;
-            var connection = factory.CreateConnection();
-            var channel = connection.CreateModel();
-
             var queueName = $"api_to_server_external_bus";
 
-            channel.QueueDeclare(queue: queueName,
+            _channel.QueueDeclare(queue: queueName,
                 durable: false,
                 exclusive: false,
                 autoDelete: false,
                 arguments: null);
 
-            var external_bus_consumer = new AsyncEventingBasicConsumer(channel);
+            var external_bus_consumer = new AsyncEventingBasicConsumer(_channel);
             external_bus_consumer.Received += async (model, ea) =>
             {
                 try
@@ -51,13 +48,13 @@ namespace ZiraLink.Server.Services
                 }
                 finally
                 {
-                    channel.BasicAck(ea.DeliveryTag, false);
+                    _channel.BasicAck(ea.DeliveryTag, false);
                 }
                 await Task.Yield();
             };
 
             await UpdateProjectsAsync(cancellationToken);
-            channel.BasicConsume(queue: queueName, autoAck: false, consumer: external_bus_consumer);
+            _channel.BasicConsume(queue: queueName, autoAck: false, consumer: external_bus_consumer);
         }
 
         private async Task UpdateProjectsAsync(CancellationToken cancellationToken)
