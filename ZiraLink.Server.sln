@@ -3,7 +3,13 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.4.33205.214
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ZiraLink.Server", "src\ZiraLink.Server\ZiraLink.Server.csproj", "{781C809F-F0BD-49A6-90B8-373CA39AD7F5}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ZiraLink.Server", "src\ZiraLink.Server\ZiraLink.Server.csproj", "{781C809F-F0BD-49A6-90B8-373CA39AD7F5}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{B98317EA-3E79-4A4A-8CCD-2100A2FFFAF9}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{9C869D4E-4482-4F8C-921B-36A5FDD6160B}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ZiraLink.Server.UnitTests", "tests\ZiraLink.Server.UnitTests\ZiraLink.Server.UnitTests.csproj", "{7431841D-EF93-4E18-8BA5-6D9561B3E8FD}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -15,9 +21,17 @@ Global
 		{781C809F-F0BD-49A6-90B8-373CA39AD7F5}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{781C809F-F0BD-49A6-90B8-373CA39AD7F5}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{781C809F-F0BD-49A6-90B8-373CA39AD7F5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7431841D-EF93-4E18-8BA5-6D9561B3E8FD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7431841D-EF93-4E18-8BA5-6D9561B3E8FD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7431841D-EF93-4E18-8BA5-6D9561B3E8FD}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7431841D-EF93-4E18-8BA5-6D9561B3E8FD}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{781C809F-F0BD-49A6-90B8-373CA39AD7F5} = {B98317EA-3E79-4A4A-8CCD-2100A2FFFAF9}
+		{7431841D-EF93-4E18-8BA5-6D9561B3E8FD} = {9C869D4E-4482-4F8C-921B-36A5FDD6160B}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {E645EDC2-CBD7-43DF-B64F-A40625B9278C}

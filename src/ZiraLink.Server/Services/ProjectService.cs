@@ -1,4 +1,5 @@
-﻿using RabbitMQ.Client;
+﻿using Microsoft.Extensions.Caching.Memory;
+using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 using ZiraLink.Server.Models;
 
@@ -6,19 +7,23 @@ namespace ZiraLink.Server.Services
 {
     public class ProjectService
     {
-        private Dictionary<string, Project> _projects = new Dictionary<string, Project>();
+        private readonly IMemoryCache _memoryCache;
         private readonly ZiraApiClient _ziraApiClient;
         private readonly IConfiguration _configuration;
-        public ProjectService(ZiraApiClient ziraApiClient, IConfiguration configuration)
+        public ProjectService(ZiraApiClient ziraApiClient, IConfiguration configuration, IMemoryCache memoryCache)
         {
             _ziraApiClient = ziraApiClient;
             _configuration = configuration;
+            _memoryCache = memoryCache;
         }
 
         public Project GetByHost(string host)
         {
-            if (!_projects.ContainsKey(host)) throw new ApplicationException("Project not found");
-            return _projects[host];
+            if (string.IsNullOrEmpty(host))
+                throw new ArgumentNullException(nameof(host));
+
+            if (!_memoryCache.TryGetValue(host, out Project project)) throw new ApplicationException("Project not found");
+            return project;
         }
 
         public async Task InitializeAsync(CancellationToken cancellationToken)
@@ -63,10 +68,8 @@ namespace ZiraLink.Server.Services
             foreach (var project in projects.Where(x => x.State == Enums.ProjectState.Active))
             {
                 var projectHost = project.DomainType == Enums.DomainType.Default ? $"{project.Domain}{_configuration["ZIRALINK_DEFAULT_DOMAIN"]}" : project.Domain;
-                projectDictionary.TryAdd(projectHost, project);
+                _memoryCache.Set(projectHost, project);
             }
-
-            _projects = projectDictionary;
         }
     }
 }
