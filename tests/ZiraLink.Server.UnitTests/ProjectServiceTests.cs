@@ -1,5 +1,9 @@
 ﻿using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.Configuration;
 using Moq;
+using RabbitMQ.Client;
+using ZiraLink.Server.Enums;
+using ZiraLink.Server.Framework.Services;
 using ZiraLink.Server.Models;
 using ZiraLink.Server.Services;
 
@@ -53,6 +57,35 @@ namespace ZiraLink.Server.UnitTests
 
             // Assert
             Assert.Null(exception);
+        }
+
+        [Fact]
+        public async Task Initialize_ShouldSetupQueueAndInitializeConsumer()
+        {
+            // Arrange
+            var configurationMock = new Mock<IConfiguration>();
+            var ziraApiClientMock = new Mock<IZiraApiClient>();
+            var cacheEntryMock = new Mock<ICacheEntry>();
+            var memoryCacheMock = new Mock<IMemoryCache>();
+            var channelMock = new Mock<IModel>();
+            var cancellationToken = CancellationToken.None;
+            var projectService = new ProjectService(ziraApiClientMock.Object, configurationMock.Object, memoryCacheMock.Object, channelMock.Object);
+            var queueName = "api_to_server_external_bus";
+            
+            memoryCacheMock.Setup(m => m.CreateEntry(It.IsAny<object>())).Returns(cacheEntryMock.Object);
+            ziraApiClientMock.Setup(m => m.GetProjects(cancellationToken)).ReturnsAsync(new List<Project>
+            {
+                new Project { State = Enums.ProjectState.Active, DomainType = DomainType.Custom, Domain = "aghdam.nl" }
+            });
+
+            // Act
+            await projectService.InitializeAsync(cancellationToken);
+
+            // Assert
+            ziraApiClientMock.Verify(m => m.GetProjects(cancellationToken), Times.Once);
+            memoryCacheMock.Verify(m => m.CreateEntry(It.IsAny<object>()), Times.Once);
+            channelMock.Verify(m => m.QueueDeclare(queueName, false, false, false, null), Times.Once);
+            channelMock.Verify(m => m.BasicConsume(queueName, false, "", false, false, null, It.IsAny<IBasicConsumer>()), Times.Once);
         }
     }
 }

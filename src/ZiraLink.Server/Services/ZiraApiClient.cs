@@ -1,10 +1,11 @@
 ﻿using System.Text.Json;
 using IdentityModel.Client;
+using ZiraLink.Server.Framework.Services;
 using ZiraLink.Server.Models;
 
 namespace ZiraLink.Server.Services
 {
-    public class ZiraApiClient
+    public class ZiraApiClient : IZiraApiClient
     {
         private readonly IConfiguration _configuration;
 

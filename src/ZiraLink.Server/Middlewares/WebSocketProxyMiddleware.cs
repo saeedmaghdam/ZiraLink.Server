@@ -1,17 +1,18 @@
-﻿using ZiraLink.Server.Services;
+﻿using ZiraLink.Server.Framework.Services;
+using ZiraLink.Server.Services;
 
 namespace ZiraLink.Server.Middlewares
 {
     public class WebSocketProxyMiddleware
     {
-        private readonly ProjectService _projectService;
+        private readonly IProjectService _projectService;
         private readonly WebSocketService _webSocketService;
         private readonly IConfiguration _configuration;
         private readonly ILogger<WebSocketProxyMiddleware> _logger;
 
         private readonly RequestDelegate _next;
 
-        public WebSocketProxyMiddleware(RequestDelegate next, ProjectService projectService, WebSocketService webSocketService, IConfiguration configuration, ILogger<WebSocketProxyMiddleware> logger)
+        public WebSocketProxyMiddleware(RequestDelegate next, IProjectService projectService, WebSocketService webSocketService, IConfiguration configuration, ILogger<WebSocketProxyMiddleware> logger)
         {
             _next = next;
             _projectService = projectService;

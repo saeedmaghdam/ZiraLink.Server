@@ -4,13 +4,14 @@ using System.Text.Json;
 using System.Text;
 using ZiraLink.Server.Models;
 using ZiraLink.Server.Services;
+using ZiraLink.Server.Framework.Services;
 
 namespace ZiraLink.Server.Middlewares
 {
     public class HttpRequestProxyMiddleware
     {
         private readonly ResponseCompletionSources _responseCompletionSources;
-        private readonly ProjectService _projectService;
+        private readonly IProjectService _projectService;
         private readonly IConfiguration _configuration;
         private readonly ILogger<HttpRequestProxyMiddleware> _logger;
         private readonly IModel _channel;
@@ -18,7 +19,7 @@ namespace ZiraLink.Server.Middlewares
 
         private readonly RequestDelegate _next;
 
-        public HttpRequestProxyMiddleware(RequestDelegate next, ResponseCompletionSources responseCompletionSources, ProjectService projectService, IConfiguration configuration, ILogger<HttpRequestProxyMiddleware> logger, IModel channel)
+        public HttpRequestProxyMiddleware(RequestDelegate next, ResponseCompletionSources responseCompletionSources, IProjectService projectService, IConfiguration configuration, ILogger<HttpRequestProxyMiddleware> logger, IModel channel)
         {
             _next = next;
             _responseCompletionSources = responseCompletionSources;

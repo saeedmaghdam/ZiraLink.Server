@@ -2,18 +2,18 @@
 using System.Text.Json;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
+using ZiraLink.Server.Framework.Services;
 using ZiraLink.Server.Models;
-using ZiraLink.Server.Services;
 
 namespace ZiraLink.Server
 {
     public class Worker : IHostedService
     {
         private readonly ResponseCompletionSources _responseCompletionSources;
-        private readonly ProjectService _projectService;
+        private readonly IProjectService _projectService;
         private readonly IModel _channel;
 
-        public Worker(ResponseCompletionSources responseCompletionSources, ProjectService projectService, IModel channel)
+        public Worker(ResponseCompletionSources responseCompletionSources, IProjectService projectService, IModel channel)
         {
             _responseCompletionSources = responseCompletionSources;
             _projectService = projectService;

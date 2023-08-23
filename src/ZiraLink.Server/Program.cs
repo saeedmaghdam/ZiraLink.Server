@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.HttpOverrides;
 using RabbitMQ.Client;
 using Serilog;
 using ZiraLink.Server;
+using ZiraLink.Server.Framework.Services;
 using ZiraLink.Server.Middlewares;
 using ZiraLink.Server.Services;
 
@@ -36,8 +37,8 @@ builder.Services.AddSingleton(serviceProvider =>
     return channel;
 });
 builder.Services.AddSingleton<ResponseCompletionSources>();
-builder.Services.AddSingleton<ZiraApiClient>();
-builder.Services.AddSingleton<ProjectService>();
+builder.Services.AddSingleton<IZiraApiClient, ZiraApiClient>();
+builder.Services.AddSingleton<IProjectService, ProjectService>();
 builder.Services.AddSingleton<WebSocketService>();
 builder.Services.AddHostedService<Worker>();
 

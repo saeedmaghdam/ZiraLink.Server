@@ -1,18 +1,19 @@
 ﻿using Microsoft.Extensions.Caching.Memory;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
+using ZiraLink.Server.Framework.Services;
 using ZiraLink.Server.Models;
 
 namespace ZiraLink.Server.Services
 {
-    public class ProjectService
+    public class ProjectService : IProjectService
     {
-        private readonly IMemoryCache _memoryCache;
-        private readonly ZiraApiClient _ziraApiClient;
+        private readonly IZiraApiClient _ziraApiClient;
         private readonly IConfiguration _configuration;
+        private readonly IMemoryCache _memoryCache;
         private readonly IModel _channel;
 
-        public ProjectService(ZiraApiClient ziraApiClient, IConfiguration configuration, IMemoryCache memoryCache, IModel channel)
+        public ProjectService(IZiraApiClient ziraApiClient, IConfiguration configuration, IMemoryCache memoryCache, IModel channel)
         {
             _ziraApiClient = ziraApiClient;
             _configuration = configuration;
