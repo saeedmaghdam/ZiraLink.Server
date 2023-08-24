@@ -6,13 +6,13 @@ namespace ZiraLink.Server.Middlewares
     public class WebSocketProxyMiddleware
     {
         private readonly IProjectService _projectService;
-        private readonly WebSocketService _webSocketService;
+        private readonly IWebSocketService _webSocketService;
         private readonly IConfiguration _configuration;
         private readonly ILogger<WebSocketProxyMiddleware> _logger;
 
         private readonly RequestDelegate _next;
 
-        public WebSocketProxyMiddleware(RequestDelegate next, IProjectService projectService, WebSocketService webSocketService, IConfiguration configuration, ILogger<WebSocketProxyMiddleware> logger)
+        public WebSocketProxyMiddleware(RequestDelegate next, IProjectService projectService, IWebSocketService webSocketService, IConfiguration configuration, ILogger<WebSocketProxyMiddleware> logger)
         {
             _next = next;
             _projectService = projectService;
@@ -27,10 +27,9 @@ namespace ZiraLink.Server.Middlewares
             var host = context.Request.Host;
 
             var project = _projectService.GetByHost(host.Value);
-            var projectHost = project.DomainType == Enums.DomainType.Default ? $"{project.Domain}{_configuration["ZIRALINK_DEFAULT_DOMAIN"]}" : project.Domain;
-
+            
             if (context.WebSockets.IsWebSocketRequest)
-                await _webSocketService.Initialize(context, project, projectHost);
+                await _webSocketService.Initialize(context, project);
             else
                 await _next(context);
         }

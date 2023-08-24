@@ -1,27 +1,31 @@
 ﻿using System.Net.WebSockets;
 using System.Text;
 using System.Text.Json;
+using Microsoft.Extensions.Caching.Memory;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
+using ZiraLink.Server.Framework.Services;
 using ZiraLink.Server.Models;
 
 namespace ZiraLink.Server.Services
 {
-    public class WebSocketService
+    public class WebSocketService : IWebSocketService
     {
+        private readonly IConfiguration _configuration;
         private readonly IModel _channel;
+        private readonly IMemoryCache _memoryCache;
 
-        private readonly Dictionary<string, WebSocket> _webSockets = new Dictionary<string, WebSocket>();
-
-        public WebSocketService(IModel channel)
+        public WebSocketService(IConfiguration configuration, IModel channel, IMemoryCache memoryCache)
         {
+            _configuration = configuration;
             _channel = channel;
+            _memoryCache = memoryCache;
         }
 
-        public async Task Initialize(HttpContext context, Project project, string projectHost)
+        public async Task Initialize(HttpContext context, Project project)
         {
             var socket = await context.WebSockets.AcceptWebSocketAsync();
-            _webSockets.Add(projectHost, socket);
+            _memoryCache.Set(project.GetProjectHost(_configuration), socket);
             InitializeRabbitMq(project.Customer.Username);
 
             try
@@ -42,12 +46,12 @@ namespace ZiraLink.Server.Services
                     };
 
                     var message = JsonSerializer.Serialize(webSocketData);
-                    PublishWebSocketDataToRabbitMQ(project.Customer.Username, projectHost, project.InternalUrl, message);
+                    PublishWebSocketDataToRabbitMQ(project.Customer.Username, project.GetProjectHost(_configuration), project.InternalUrl, message);
                 }
             }
             finally
             {
-                _webSockets.Remove(projectHost);
+                _memoryCache.Remove(project.GetProjectHost(_configuration));
             }
         }
 
@@ -74,10 +78,8 @@ namespace ZiraLink.Server.Services
                     var host = Encoding.UTF8.GetString((byte[])hostByteArray);
 
                     var requestModel = JsonSerializer.Deserialize<WebSocketData>(response);
-                    if (!_webSockets.ContainsKey(host))
+                    if (!_memoryCache.TryGetValue(host, out WebSocket webSocket))
                         throw new ApplicationException("WebSocket not found");
-
-                    var webSocket = _webSockets[host];
 
                     var arraySegment = new ArraySegment<byte>(requestModel.Payload, 0, requestModel.PayloadCount);
                     await webSocket.SendAsync(arraySegment,

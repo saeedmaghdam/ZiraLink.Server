@@ -40,7 +40,8 @@ builder.Services.AddSingleton<ResponseCompletionSources>();
 builder.Services.AddSingleton<IZiraApiClient, ZiraApiClient>();
 builder.Services.AddSingleton<IProjectService, ProjectService>();
 builder.Services.AddSingleton<IIdentityService, IdentityService>();
-builder.Services.AddSingleton<WebSocketService>();
+builder.Services.AddSingleton<IWebSocketService, WebSocketService>();
+builder.Services.AddSingleton<IHttpRequestProxyService, HttpRequestProxyService>();
 builder.Services.AddHostedService<Worker>();
 
 builder.Services.AddHttpClient();
@@ -58,7 +59,7 @@ builder.Services.Configure<ForwardedHeadersOptions>(options =>
 
 var app = builder.Build();
 
-app.Services.GetRequiredService<WebSocketService>().InitializeConsumer();
+app.Services.GetRequiredService<IWebSocketService>().InitializeConsumer();
 
 // Configure the HTTP request pipeline.
 
