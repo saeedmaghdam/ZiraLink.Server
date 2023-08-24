@@ -60,14 +60,11 @@ namespace ZiraLink.Server.Services
 
         private async Task UpdateProjectsAsync(CancellationToken cancellationToken)
         {
-            var projects = await _ziraApiClient.GetProjects(CancellationToken.None);
+            var projects = await _ziraApiClient.GetProjectsAsync(CancellationToken.None);
 
             var projectDictionary = new Dictionary<string, Project>();
             foreach (var project in projects.Where(x => x.State == Enums.ProjectState.Active))
-            {
-                var projectHost = project.DomainType == Enums.DomainType.Default ? $"{project.Domain}{_configuration["ZIRALINK_DEFAULT_DOMAIN"]}" : project.Domain;
-                _memoryCache.Set(projectHost, project);
-            }
+                _memoryCache.Set(project.GetProjectHost(_configuration), project);
         }
     }
 }

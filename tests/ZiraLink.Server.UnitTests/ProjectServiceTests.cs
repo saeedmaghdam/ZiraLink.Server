@@ -42,7 +42,7 @@ namespace ZiraLink.Server.UnitTests
         }
 
         [Fact]
-        public void GetByHost_HostExistsInCache_ShouldThrowAnApplicationException()
+        public void GetByHost_HostExistsInCache_ShouldNotThrowAnyException()
         {
             // Arrange
             var memoryCacheMock = new Mock<IMemoryCache>();
@@ -57,6 +57,7 @@ namespace ZiraLink.Server.UnitTests
 
             // Assert
             Assert.Null(exception);
+            memoryCacheMock.Verify(m => m.TryGetValue(It.IsAny<object>(), out It.Ref<object?>.IsAny), Times.Once);
         }
 
         [Fact]
@@ -73,7 +74,7 @@ namespace ZiraLink.Server.UnitTests
             var queueName = "api_to_server_external_bus";
             
             memoryCacheMock.Setup(m => m.CreateEntry(It.IsAny<object>())).Returns(cacheEntryMock.Object);
-            ziraApiClientMock.Setup(m => m.GetProjects(cancellationToken)).ReturnsAsync(new List<Project>
+            ziraApiClientMock.Setup(m => m.GetProjectsAsync(cancellationToken)).ReturnsAsync(new List<Project>
             {
                 new Project { State = Enums.ProjectState.Active, DomainType = DomainType.Custom, Domain = "aghdam.nl" }
             });
@@ -82,7 +83,7 @@ namespace ZiraLink.Server.UnitTests
             await projectService.InitializeAsync(cancellationToken);
 
             // Assert
-            ziraApiClientMock.Verify(m => m.GetProjects(cancellationToken), Times.Once);
+            ziraApiClientMock.Verify(m => m.GetProjectsAsync(cancellationToken), Times.Once);
             memoryCacheMock.Verify(m => m.CreateEntry(It.IsAny<object>()), Times.Once);
             channelMock.Verify(m => m.QueueDeclare(queueName, false, false, false, null), Times.Once);
             channelMock.Verify(m => m.BasicConsume(queueName, false, "", false, false, null, It.IsAny<IBasicConsumer>()), Times.Once);

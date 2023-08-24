@@ -4,6 +4,6 @@ namespace ZiraLink.Server.Framework.Services
 {
     public interface IZiraApiClient
     {
-        Task<List<Project>> GetProjects(CancellationToken cancellationToken);
+        Task<List<Project>> GetProjectsAsync(CancellationToken cancellationToken);
     }
 }

@@ -39,8 +39,11 @@ builder.Services.AddSingleton(serviceProvider =>
 builder.Services.AddSingleton<ResponseCompletionSources>();
 builder.Services.AddSingleton<IZiraApiClient, ZiraApiClient>();
 builder.Services.AddSingleton<IProjectService, ProjectService>();
+builder.Services.AddSingleton<IIdentityService, IdentityService>();
 builder.Services.AddSingleton<WebSocketService>();
 builder.Services.AddHostedService<Worker>();
+
+builder.Services.AddHttpClient();
 
 builder.Services.Configure<ForwardedHeadersOptions>(options =>
 {

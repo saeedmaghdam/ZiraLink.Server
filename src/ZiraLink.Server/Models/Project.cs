@@ -16,5 +16,7 @@ namespace ZiraLink.Server.Models
         public ProjectState State { get; set; }
 
         public Customer Customer { get; set; }
+
+        public string GetProjectHost(IConfiguration configuration) => this.DomainType == Enums.DomainType.Default ? $"{this.Domain}{configuration["ZIRALINK_DEFAULT_DOMAIN"]}" : this.Domain;
     }
 }
