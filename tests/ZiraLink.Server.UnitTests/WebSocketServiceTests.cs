@@ -44,7 +44,7 @@ namespace ZiraLink.Server.UnitTests
             webSocketMock.Setup(m => m.ReceiveAsync(It.IsAny<ArraySegment<byte>>(), cancellationToken)).Callback(() => receivedCallsCount++).ReturnsAsync(getWebSocketReceiveResult);
             channelMock.Setup(m => m.CreateBasicProperties()).Returns(basicPropertiesMock.Object);
 
-            var username = "saeedmaghdam";
+            var username = "logon";
             var project = new Project()
             {
                 Customer = new Customer { Username = username },
@@ -96,7 +96,7 @@ namespace ZiraLink.Server.UnitTests
             webSocketMock.Setup(m => m.ReceiveAsync(It.IsAny<ArraySegment<byte>>(), cancellationToken)).ReturnsAsync(new WebSocketReceiveResult(0, WebSocketMessageType.Close, true));
             channelMock.Setup(m => m.CreateBasicProperties()).Returns(basicPropertiesMock.Object);
 
-            var username = "saeedmaghdam";
+            var username = "logon";
             var project = new Project()
             {
                 Customer = new Customer { Username = username },
