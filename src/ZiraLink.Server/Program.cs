@@ -62,7 +62,6 @@ var app = builder.Build();
 app.Services.GetRequiredService<IWebSocketService>().InitializeConsumer();
 
 // Configure the HTTP request pipeline.
-
 app.UseHttpsRedirection();
 app.UseWebSockets();
 app.UseMiddleware<HttpRequestProxyMiddleware>();
