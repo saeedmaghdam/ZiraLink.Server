@@ -19,7 +19,8 @@ namespace ZiraLink.Server.Services
             var client = _httpClientFactory.CreateClient();
 
             // discover endpoints from metadata
-            var disco = await client.GetDiscoveryDocumentAsync(_configuration["ZIRALINK_IDS_URL"], cancellationToken);
+            var uri = new Uri(_configuration["ZIRALINK_IDS_URL"]!);
+            var disco = await client.GetDiscoveryDocumentAsync(uri.ToString(), cancellationToken);
             if (disco.IsError)
                 throw new ApplicationException("Discovery not found");
 
