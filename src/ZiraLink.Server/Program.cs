@@ -1,4 +1,6 @@
-﻿using System.Reflection;
+﻿using System.Net;
+using System.Net.Security;
+using System.Reflection;
 using Microsoft.AspNetCore.HttpOverrides;
 using RabbitMQ.Client;
 using Serilog;
@@ -24,6 +26,21 @@ Log.Logger = new LoggerConfiguration()
 builder.Host.UseSerilog();
 
 // Add services to the container.
+if (Configuration["ASPNETCORE_ENVIRONMENT"] == "Test")
+{
+    ServicePointManager.ServerCertificateValidationCallback = (sender, certificate, chain, sslPolicyErrors) =>
+    {
+        string expectedThumbprint = "10CE57B0083EBF09ED8E53CF6AC33D49B3A76414";
+        if (certificate!.GetCertHashString() == expectedThumbprint)
+            return true;
+
+        if (sslPolicyErrors == SslPolicyErrors.None)
+            return true;
+
+        return false;
+    };
+}
+
 builder.Services.AddMemoryCache();
 
 builder.Services.AddSingleton(serviceProvider =>
