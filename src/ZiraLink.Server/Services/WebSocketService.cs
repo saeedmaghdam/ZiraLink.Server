@@ -25,7 +25,7 @@ namespace ZiraLink.Server.Services
         public async Task Initialize(HttpContext context, Project project)
         {
             var socket = await context.WebSockets.AcceptWebSocketAsync();
-            _memoryCache.Set(project.GetProjectHost(_configuration), socket);
+            _memoryCache.Set($"ws:{project.GetProjectHost(_configuration)}", socket);
             InitializeRabbitMq(project.Customer.Username);
 
             try
@@ -51,7 +51,7 @@ namespace ZiraLink.Server.Services
             }
             finally
             {
-                _memoryCache.Remove(project.GetProjectHost(_configuration));
+                _memoryCache.Remove($"ws:{project.GetProjectHost(_configuration)}");
             }
         }
 
@@ -78,7 +78,7 @@ namespace ZiraLink.Server.Services
                     var host = Encoding.UTF8.GetString((byte[])hostByteArray);
 
                     var requestModel = JsonSerializer.Deserialize<WebSocketData>(response);
-                    if (!_memoryCache.TryGetValue(host, out WebSocket webSocket))
+                    if (!_memoryCache.TryGetValue($"ws:{host}", out WebSocket webSocket))
                         throw new ApplicationException("WebSocket not found");
 
                     var arraySegment = new ArraySegment<byte>(requestModel.Payload, 0, requestModel.PayloadCount);

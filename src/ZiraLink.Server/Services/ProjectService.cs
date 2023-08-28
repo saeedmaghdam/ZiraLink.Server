@@ -26,7 +26,7 @@ namespace ZiraLink.Server.Services
             if (string.IsNullOrEmpty(host))
                 throw new ArgumentNullException(nameof(host));
 
-            if (!_memoryCache.TryGetValue(host, out Project project)) throw new ApplicationException("Project not found");
+            if (!_memoryCache.TryGetValue($"project:{host}", out Project project)) throw new ApplicationException("Project not found");
             return project;
         }
 
@@ -64,7 +64,7 @@ namespace ZiraLink.Server.Services
 
             var projectDictionary = new Dictionary<string, Project>();
             foreach (var project in projects.Where(x => x.State == Enums.ProjectState.Active))
-                _memoryCache.Set(project.GetProjectHost(_configuration), project);
+                _memoryCache.Set($"project:{project.GetProjectHost(_configuration)}", project);
         }
     }
 }
