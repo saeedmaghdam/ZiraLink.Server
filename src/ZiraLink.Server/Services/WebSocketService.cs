@@ -1,7 +1,6 @@
 ﻿using System.Net.WebSockets;
 using System.Text;
 using System.Text.Json;
-using Microsoft.Extensions.Caching.Memory;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 using ZiraLink.Server.Framework.Services;
@@ -13,19 +12,19 @@ namespace ZiraLink.Server.Services
     {
         private readonly IConfiguration _configuration;
         private readonly IModel _channel;
-        private readonly IMemoryCache _memoryCache;
+        private readonly ICache _cache;
 
-        public WebSocketService(IConfiguration configuration, IModel channel, IMemoryCache memoryCache)
+        public WebSocketService(IConfiguration configuration, IModel channel, ICache cache)
         {
             _configuration = configuration;
             _channel = channel;
-            _memoryCache = memoryCache;
+            _cache = cache;
         }
 
         public async Task Initialize(HttpContext context, Project project)
         {
             var socket = await context.WebSockets.AcceptWebSocketAsync();
-            _memoryCache.Set($"ws:{project.GetProjectHost(_configuration)}", socket);
+            _cache.SetWebSocket(project.GetProjectHost(_configuration), socket);
             InitializeRabbitMq(project.Customer.Username);
 
             try
@@ -51,7 +50,7 @@ namespace ZiraLink.Server.Services
             }
             finally
             {
-                _memoryCache.Remove($"ws:{project.GetProjectHost(_configuration)}");
+                _cache.RemoveWebSocket(project.GetProjectHost(_configuration));
             }
         }
 
@@ -78,7 +77,7 @@ namespace ZiraLink.Server.Services
                     var host = Encoding.UTF8.GetString((byte[])hostByteArray);
 
                     var requestModel = JsonSerializer.Deserialize<WebSocketData>(response);
-                    if (!_memoryCache.TryGetValue($"ws:{host}", out WebSocket webSocket))
+                    if (!_cache.TryGetWebSocket(host, out WebSocket webSocket))
                         throw new ApplicationException("WebSocket not found");
 
                     var arraySegment = new ArraySegment<byte>(requestModel.Payload, 0, requestModel.PayloadCount);

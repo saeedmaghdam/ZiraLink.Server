@@ -59,6 +59,7 @@ builder.Services.AddSingleton<IProjectService, ProjectService>();
 builder.Services.AddSingleton<IIdentityService, IdentityService>();
 builder.Services.AddSingleton<IWebSocketService, WebSocketService>();
 builder.Services.AddSingleton<IHttpRequestProxyService, HttpRequestProxyService>();
+builder.Services.AddSingleton<ICache, Cache>();
 builder.Services.AddHostedService<Worker>();
 
 builder.Services.AddHttpClient();

@@ -1,5 +1,4 @@
-﻿using Microsoft.Extensions.Caching.Memory;
-using RabbitMQ.Client;
+﻿using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 using ZiraLink.Server.Framework.Services;
 using ZiraLink.Server.Models;
@@ -10,14 +9,14 @@ namespace ZiraLink.Server.Services
     {
         private readonly IZiraApiClient _ziraApiClient;
         private readonly IConfiguration _configuration;
-        private readonly IMemoryCache _memoryCache;
+        private readonly ICache _cache;
         private readonly IModel _channel;
 
-        public ProjectService(IZiraApiClient ziraApiClient, IConfiguration configuration, IMemoryCache memoryCache, IModel channel)
+        public ProjectService(IZiraApiClient ziraApiClient, IConfiguration configuration, ICache cache, IModel channel)
         {
             _ziraApiClient = ziraApiClient;
             _configuration = configuration;
-            _memoryCache = memoryCache;
+            _cache = cache;
             _channel = channel;
         }
 
@@ -26,7 +25,7 @@ namespace ZiraLink.Server.Services
             if (string.IsNullOrEmpty(host))
                 throw new ArgumentNullException(nameof(host));
 
-            if (!_memoryCache.TryGetValue($"project:{host}", out Project project)) throw new ApplicationException("Project not found");
+            if (!_cache.TryGetProject(host, out Project project)) throw new ApplicationException("Project not found");
             return project;
         }
 
@@ -64,7 +63,7 @@ namespace ZiraLink.Server.Services
 
             var projectDictionary = new Dictionary<string, Project>();
             foreach (var project in projects.Where(x => x.State == Enums.ProjectState.Active))
-                _memoryCache.Set($"project:{project.GetProjectHost(_configuration)}", project);
+                _cache.SetProject(project.GetProjectHost(_configuration), project);
         }
     }
 }

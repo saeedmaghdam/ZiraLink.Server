@@ -1,9 +1,9 @@
 ﻿using System.Net.WebSockets;
 using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Configuration;
 using Moq;
 using RabbitMQ.Client;
+using ZiraLink.Server.Framework.Services;
 using ZiraLink.Server.Models;
 using ZiraLink.Server.Services;
 
@@ -24,10 +24,18 @@ namespace ZiraLink.Server.UnitTests
             var cancellationToken = CancellationToken.None;
             var channelMock = new Mock<IModel>();
             var basicPropertiesMock = new Mock<IBasicProperties>();
-            var memoryCacheMock = new Mock<IMemoryCache>();
+            var cacheMock = new Mock<ICache>();
             var webSocketMock = new Mock<WebSocket>();
             var httpContextMock = new Mock<HttpContext>();
-            var cacheEntryMock = new Mock<ICacheEntry>();
+
+            var username = "logon";
+            var project = new Project()
+            {
+                DomainType = Enums.DomainType.Custom,
+                Domain = "ziralink.local",
+                Customer = new Customer { Username = username },
+                InternalUrl = "https://localhost:3000"
+            };
 
             var receivedCallsCount = 0;
             Func<WebSocketReceiveResult> getWebSocketReceiveResult = () =>
@@ -38,25 +46,17 @@ namespace ZiraLink.Server.UnitTests
                     return new WebSocketReceiveResult(0, WebSocketMessageType.Text, false);
             };
 
-            cacheEntryMock.SetupSet(m => m.Value = webSocketMock.Object).Verifiable();
             httpContextMock.Setup(m => m.WebSockets.AcceptWebSocketAsync()).ReturnsAsync(webSocketMock.Object);
-            memoryCacheMock.Setup(m => m.CreateEntry(It.IsAny<object>())).Returns(cacheEntryMock.Object);
+            cacheMock.Setup(m => m.SetWebSocket(project.GetProjectHost(configuration), webSocketMock.Object)).Returns(webSocketMock.Object);
             webSocketMock.Setup(m => m.ReceiveAsync(It.IsAny<ArraySegment<byte>>(), cancellationToken)).Callback(() => receivedCallsCount++).ReturnsAsync(getWebSocketReceiveResult);
             channelMock.Setup(m => m.CreateBasicProperties()).Returns(basicPropertiesMock.Object);
-
-            var username = "logon";
-            var project = new Project()
-            {
-                Customer = new Customer { Username = username },
-                InternalUrl = "https://localhost:3000"
-            };
 
             var headers = new Dictionary<string, object>();
             headers.Add("IntUrl", project.InternalUrl);
             headers.Add("Host", project.GetProjectHost(configuration));
             basicPropertiesMock.SetupGet(m => m.Headers).Returns(headers);
 
-            var webSocketService = new WebSocketService(configuration, channelMock.Object, memoryCacheMock.Object);
+            var webSocketService = new WebSocketService(configuration, channelMock.Object, cacheMock.Object);
 
             // Act
             await webSocketService.Initialize(httpContextMock.Object, project);
@@ -64,7 +64,8 @@ namespace ZiraLink.Server.UnitTests
             // Assert
             var queueName = $"{username}_websocket_server_bus";
             var exchangeName = "websocket_bus";
-            memoryCacheMock.Verify(m => m.CreateEntry(It.IsAny<object>()), Times.Once);
+            cacheMock.Verify(m => m.SetWebSocket(project.GetProjectHost(configuration), webSocketMock.Object), Times.Once);
+            cacheMock.Verify(m => m.RemoveWebSocket(project.GetProjectHost(configuration)), Times.Once);
             channelMock.Verify(m => m.ExchangeDeclare(exchangeName, "direct", false, false, null), Times.Once);
             channelMock.Verify(m => m.QueueDeclare(queueName, false, false, false, null), Times.Once);
             channelMock.Verify(m => m.QueueBind(queueName, exchangeName, queueName, null), Times.Once);
@@ -85,16 +86,9 @@ namespace ZiraLink.Server.UnitTests
             var cancellationToken = CancellationToken.None;
             var channelMock = new Mock<IModel>();
             var basicPropertiesMock = new Mock<IBasicProperties>();
-            var memoryCacheMock = new Mock<IMemoryCache>();
+            var cacheMock = new Mock<ICache>();
             var webSocketMock = new Mock<WebSocket>();
             var httpContextMock = new Mock<HttpContext>();
-            var cacheEntryMock = new Mock<ICacheEntry>();
-
-            cacheEntryMock.SetupSet(m => m.Value = webSocketMock.Object).Verifiable();
-            httpContextMock.Setup(m => m.WebSockets.AcceptWebSocketAsync()).ReturnsAsync(webSocketMock.Object);
-            memoryCacheMock.Setup(m => m.CreateEntry(It.IsAny<object>())).Returns(cacheEntryMock.Object);
-            webSocketMock.Setup(m => m.ReceiveAsync(It.IsAny<ArraySegment<byte>>(), cancellationToken)).ReturnsAsync(new WebSocketReceiveResult(0, WebSocketMessageType.Close, true));
-            channelMock.Setup(m => m.CreateBasicProperties()).Returns(basicPropertiesMock.Object);
 
             var username = "logon";
             var project = new Project()
@@ -103,7 +97,12 @@ namespace ZiraLink.Server.UnitTests
                 InternalUrl = "https://localhost:3000"
             };
 
-            var webSocketService = new WebSocketService(configuration, channelMock.Object, memoryCacheMock.Object);
+            httpContextMock.Setup(m => m.WebSockets.AcceptWebSocketAsync()).ReturnsAsync(webSocketMock.Object);
+            cacheMock.Setup(m => m.SetWebSocket(project.GetProjectHost(configuration), webSocketMock.Object)).Returns(webSocketMock.Object);
+            webSocketMock.Setup(m => m.ReceiveAsync(It.IsAny<ArraySegment<byte>>(), cancellationToken)).ReturnsAsync(new WebSocketReceiveResult(0, WebSocketMessageType.Close, true));
+            channelMock.Setup(m => m.CreateBasicProperties()).Returns(basicPropertiesMock.Object);
+
+            var webSocketService = new WebSocketService(configuration, channelMock.Object, cacheMock.Object);
 
             // Act
             await webSocketService.Initialize(httpContextMock.Object, project);
@@ -111,7 +110,8 @@ namespace ZiraLink.Server.UnitTests
             // Assert
             var queueName = $"{username}_websocket_server_bus";
             var exchangeName = "websocket_bus";
-            memoryCacheMock.Verify(m => m.CreateEntry(It.IsAny<object>()), Times.Once);
+            cacheMock.Verify(m => m.SetWebSocket(project.GetProjectHost(configuration), webSocketMock.Object), Times.Once);
+            cacheMock.Verify(m => m.RemoveWebSocket(project.GetProjectHost(configuration)), Times.Once);
             channelMock.Verify(m => m.ExchangeDeclare(exchangeName, "direct", false, false, null), Times.Once);
             channelMock.Verify(m => m.QueueDeclare(queueName, false, false, false, null), Times.Once);
             channelMock.Verify(m => m.QueueBind(queueName, exchangeName, queueName, null), Times.Once);
