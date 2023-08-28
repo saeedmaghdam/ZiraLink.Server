@@ -1,5 +1,6 @@
 ﻿using System.Text.Json;
 using IdentityModel.Client;
+using ZiraLink.Server.Enums;
 using ZiraLink.Server.Framework.Services;
 using ZiraLink.Server.Models;
 
@@ -26,7 +27,7 @@ namespace ZiraLink.Server.Services
             if (token.IsError)
                 throw new ApplicationException($"Token request failed, {token.Error}");
 
-            var apiClient = _httpClientFactory.CreateClient();
+            var apiClient = _httpClientFactory.CreateClient(NamedHttpClients.Default);
             apiClient.SetBearerToken(token.AccessToken!);
 
             var baseUri = new Uri(_configuration["ZIRALINK_API_URL"]!);

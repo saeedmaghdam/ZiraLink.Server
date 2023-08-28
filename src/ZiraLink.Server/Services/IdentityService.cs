@@ -1,4 +1,5 @@
 ﻿using IdentityModel.Client;
+using ZiraLink.Server.Enums;
 using ZiraLink.Server.Framework.Services;
 
 namespace ZiraLink.Server.Services
@@ -16,7 +17,7 @@ namespace ZiraLink.Server.Services
 
         public async Task<TokenResponse> GetTokenAsync(CancellationToken cancellationToken)
         {
-            var client = _httpClientFactory.CreateClient();
+            var client = _httpClientFactory.CreateClient(NamedHttpClients.Default);
 
             // discover endpoints from metadata
             var uri = new Uri(_configuration["ZIRALINK_IDS_URL"]!);
