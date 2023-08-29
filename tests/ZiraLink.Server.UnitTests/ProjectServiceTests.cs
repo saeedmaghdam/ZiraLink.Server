@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Configuration;
+﻿using System.Diagnostics.CodeAnalysis;
+using Microsoft.Extensions.Configuration;
 using Moq;
 using RabbitMQ.Client;
 using ZiraLink.Server.Enums;
@@ -8,6 +9,7 @@ using ZiraLink.Server.Services;
 
 namespace ZiraLink.Server.UnitTests
 {
+    [ExcludeFromCodeCoverage]
     public class ProjectServiceTests
     {
         [Fact]

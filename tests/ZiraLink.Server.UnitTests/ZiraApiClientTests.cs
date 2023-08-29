@@ -1,4 +1,5 @@
-﻿using System.Text.Json;
+﻿using System.Diagnostics.CodeAnalysis;
+using System.Text.Json;
 using IdentityModel.Client;
 using Microsoft.Extensions.Configuration;
 using Moq;
@@ -9,6 +10,7 @@ using ZiraLink.Server.Services;
 
 namespace ZiraLink.Server.UnitTests
 {
+    [ExcludeFromCodeCoverage]
     public class ZiraApiClientTests
     {
         [Fact]

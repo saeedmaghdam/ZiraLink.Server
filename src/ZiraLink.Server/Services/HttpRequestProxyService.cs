@@ -24,7 +24,7 @@ namespace ZiraLink.Server.Services
         {
             await _projectService.InitializeAsync(cancellationToken);
 
-            var queueName = $"response_bus";
+            var queueName = "response_bus";
             var exchangeName = "response";
 
             _channel.ExchangeDeclare(exchange: exchangeName,

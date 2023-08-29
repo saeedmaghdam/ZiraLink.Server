@@ -1,5 +1,5 @@
-﻿using System.Net.WebSockets;
-using Castle.Core.Configuration;
+﻿using System.Diagnostics.CodeAnalysis;
+using System.Net.WebSockets;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using Moq;
@@ -10,6 +10,7 @@ using ZiraLink.Server.Services;
 
 namespace ZiraLink.Server.UnitTests
 {
+    [ExcludeFromCodeCoverage]
     public class WebSocketServiceTests
     {
         [Fact]
