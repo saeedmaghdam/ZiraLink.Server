@@ -7,8 +7,8 @@ namespace ZiraLink.Server.Framework.Services
     {
         Project SetProject(string host, Project value);
         bool TryGetProject(string host, out Project value);
-        WebSocket SetWebSocket(string host, WebSocket value);
-        bool TryGetWebSocket(string host, out WebSocket value);
+        IWebSocket SetWebSocket(string host, IWebSocket value);
+        bool TryGetWebSocket(string host, out IWebSocket value);
         void RemoveWebSocket(string host);
     }
 }

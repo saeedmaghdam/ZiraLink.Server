@@ -21,10 +21,9 @@ namespace ZiraLink.Server.Services
             _cache = cache;
         }
 
-        public async Task Initialize(HttpContext context, Project project)
+        public async Task Initialize(IWebSocket webSocket, Project project)
         {
-            var socket = await context.WebSockets.AcceptWebSocketAsync();
-            _cache.SetWebSocket(project.GetProjectHost(_configuration), socket);
+            _cache.SetWebSocket(project.GetProjectHost(_configuration), webSocket);
             InitializeRabbitMq(project.Customer.Username);
 
             try
@@ -32,7 +31,7 @@ namespace ZiraLink.Server.Services
                 var buffer = new byte[1024];
                 while (true)
                 {
-                    var result = await socket.ReceiveAsync(new ArraySegment<byte>(buffer), default);
+                    var result = await webSocket.ReceiveAsync(new ArraySegment<byte>(buffer), default);
                     if (result.MessageType == WebSocketMessageType.Close)
                         break;
 
@@ -77,7 +76,7 @@ namespace ZiraLink.Server.Services
                     var host = Encoding.UTF8.GetString((byte[])hostByteArray);
 
                     var requestModel = JsonSerializer.Deserialize<WebSocketData>(response);
-                    if (!_cache.TryGetWebSocket(host, out WebSocket webSocket))
+                    if (!_cache.TryGetWebSocket(host, out IWebSocket webSocket))
                         throw new ApplicationException("WebSocket not found");
 
                     var arraySegment = new ArraySegment<byte>(requestModel.Payload, 0, requestModel.PayloadCount);

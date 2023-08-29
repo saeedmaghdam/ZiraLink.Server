@@ -58,6 +58,7 @@ builder.Services.AddSingleton<IZiraApiClient, ZiraApiClient>();
 builder.Services.AddSingleton<IProjectService, ProjectService>();
 builder.Services.AddSingleton<IIdentityService, IdentityService>();
 builder.Services.AddSingleton<IWebSocketService, WebSocketService>();
+builder.Services.AddSingleton<IWebSocketFactory, WebSocketFactory>();
 builder.Services.AddSingleton<IHttpRequestProxyService, HttpRequestProxyService>();
 builder.Services.AddSingleton<ICache, Cache>();
 builder.Services.AddHostedService<Worker>();

@@ -4,7 +4,7 @@ namespace ZiraLink.Server.Framework.Services
 {
     public interface IWebSocketService
     {
-        Task Initialize(HttpContext context, Project project);
+        Task Initialize(IWebSocket webSocket, Project project);
         void InitializeConsumer();
     }
 }

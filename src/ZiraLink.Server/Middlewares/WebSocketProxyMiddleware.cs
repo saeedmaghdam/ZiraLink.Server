@@ -8,17 +8,19 @@ namespace ZiraLink.Server.Middlewares
         private readonly IProjectService _projectService;
         private readonly IWebSocketService _webSocketService;
         private readonly IConfiguration _configuration;
+        private readonly IWebSocketFactory _webSocketFactory;
         private readonly ILogger<WebSocketProxyMiddleware> _logger;
 
         private readonly RequestDelegate _next;
 
-        public WebSocketProxyMiddleware(RequestDelegate next, IProjectService projectService, IWebSocketService webSocketService, IConfiguration configuration, ILogger<WebSocketProxyMiddleware> logger)
+        public WebSocketProxyMiddleware(RequestDelegate next, ILogger<WebSocketProxyMiddleware> logger, IProjectService projectService, IWebSocketService webSocketService, IConfiguration configuration, IWebSocketFactory webSocketFactory)
         {
             _next = next;
+            _logger = logger;
             _projectService = projectService;
             _webSocketService = webSocketService;
             _configuration = configuration;
-            _logger = logger;
+            _webSocketFactory = webSocketFactory;
         }
 
         public async Task Invoke(HttpContext context)
@@ -27,11 +29,17 @@ namespace ZiraLink.Server.Middlewares
             var host = context.Request.Host;
 
             var project = _projectService.GetByHost(host.Value);
-            
+
             if (context.WebSockets.IsWebSocketRequest)
-                await _webSocketService.Initialize(context, project);
+            {
+                var webSocketConnection = await context.WebSockets.AcceptWebSocketAsync();
+                var webSocket = _webSocketFactory.CreateClientWebSocket(webSocketConnection);
+                await _webSocketService.Initialize(webSocket, project);
+            }
             else
+            {
                 await _next(context);
+            }
         }
     }
 }

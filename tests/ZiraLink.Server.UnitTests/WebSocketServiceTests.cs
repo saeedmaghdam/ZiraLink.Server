@@ -1,4 +1,5 @@
 ﻿using System.Net.WebSockets;
+using Castle.Core.Configuration;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using Moq;
@@ -25,7 +26,7 @@ namespace ZiraLink.Server.UnitTests
             var channelMock = new Mock<IModel>();
             var basicPropertiesMock = new Mock<IBasicProperties>();
             var cacheMock = new Mock<ICache>();
-            var webSocketMock = new Mock<WebSocket>();
+            var webSocketMock = new Mock<IWebSocket>();
             var httpContextMock = new Mock<HttpContext>();
 
             var username = "logon";
@@ -46,7 +47,6 @@ namespace ZiraLink.Server.UnitTests
                     return new WebSocketReceiveResult(0, WebSocketMessageType.Text, false);
             };
 
-            httpContextMock.Setup(m => m.WebSockets.AcceptWebSocketAsync()).ReturnsAsync(webSocketMock.Object);
             cacheMock.Setup(m => m.SetWebSocket(project.GetProjectHost(configuration), webSocketMock.Object)).Returns(webSocketMock.Object);
             webSocketMock.Setup(m => m.ReceiveAsync(It.IsAny<ArraySegment<byte>>(), cancellationToken)).Callback(() => receivedCallsCount++).ReturnsAsync(getWebSocketReceiveResult);
             channelMock.Setup(m => m.CreateBasicProperties()).Returns(basicPropertiesMock.Object);
@@ -59,7 +59,7 @@ namespace ZiraLink.Server.UnitTests
             var webSocketService = new WebSocketService(configuration, channelMock.Object, cacheMock.Object);
 
             // Act
-            await webSocketService.Initialize(httpContextMock.Object, project);
+            await webSocketService.Initialize(webSocketMock.Object, project);
 
             // Assert
             var queueName = $"{username}_websocket_server_bus";
@@ -87,7 +87,7 @@ namespace ZiraLink.Server.UnitTests
             var channelMock = new Mock<IModel>();
             var basicPropertiesMock = new Mock<IBasicProperties>();
             var cacheMock = new Mock<ICache>();
-            var webSocketMock = new Mock<WebSocket>();
+            var webSocketMock = new Mock<IWebSocket>();
             var httpContextMock = new Mock<HttpContext>();
 
             var username = "logon";
@@ -97,7 +97,6 @@ namespace ZiraLink.Server.UnitTests
                 InternalUrl = "https://localhost:3000"
             };
 
-            httpContextMock.Setup(m => m.WebSockets.AcceptWebSocketAsync()).ReturnsAsync(webSocketMock.Object);
             cacheMock.Setup(m => m.SetWebSocket(project.GetProjectHost(configuration), webSocketMock.Object)).Returns(webSocketMock.Object);
             webSocketMock.Setup(m => m.ReceiveAsync(It.IsAny<ArraySegment<byte>>(), cancellationToken)).ReturnsAsync(new WebSocketReceiveResult(0, WebSocketMessageType.Close, true));
             channelMock.Setup(m => m.CreateBasicProperties()).Returns(basicPropertiesMock.Object);
@@ -105,7 +104,7 @@ namespace ZiraLink.Server.UnitTests
             var webSocketService = new WebSocketService(configuration, channelMock.Object, cacheMock.Object);
 
             // Act
-            await webSocketService.Initialize(httpContextMock.Object, project);
+            await webSocketService.Initialize(webSocketMock.Object, project);
 
             // Assert
             var queueName = $"{username}_websocket_server_bus";
@@ -116,6 +115,23 @@ namespace ZiraLink.Server.UnitTests
             channelMock.Verify(m => m.QueueDeclare(queueName, false, false, false, null), Times.Once);
             channelMock.Verify(m => m.QueueBind(queueName, exchangeName, queueName, null), Times.Once);
             webSocketMock.Verify(m => m.ReceiveAsync(It.IsAny<ArraySegment<byte>>(), cancellationToken), Times.Exactly(1));
+        }
+
+        [Fact]
+        public void InitializeConsumer_ShouldInitializeQueueAndStartConsuming()
+        {
+            // Arrange
+            var queueName = "websocket_client_bus";
+            var channelMock = new Mock<IModel>();
+
+            var webSocketService = new WebSocketService(null, channelMock.Object, null);
+
+            // Act
+            webSocketService.InitializeConsumer();
+
+            // Assert
+            channelMock.Verify(m => m.QueueDeclare(queueName, false, false, false, null), Times.Once);
+            channelMock.Verify(m => m.BasicConsume(queueName, false, "", false, false, null, It.IsAny<IBasicConsumer>()), Times.Once);
         }
     }
 }
