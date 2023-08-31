@@ -67,6 +67,8 @@ namespace ZiraLink.Server.Services
             var consumer = new AsyncEventingBasicConsumer(_channel);
             consumer.Received += async (model, ea) =>
             {
+                _channel.BasicAck(ea.DeliveryTag, false);
+
                 try
                 {
                     var response = Encoding.UTF8.GetString(ea.Body.ToArray());
@@ -85,9 +87,9 @@ namespace ZiraLink.Server.Services
                             requestModel.EndOfMessage,
                             CancellationToken.None);
                 }
-                finally
+                catch
                 {
-                    _channel.BasicAck(ea.DeliveryTag, false);
+                    // ignored
                 }
             };
 
