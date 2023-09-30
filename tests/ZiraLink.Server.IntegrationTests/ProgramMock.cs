@@ -68,6 +68,7 @@ builder.Services.AddSingleton<IWebSocketFactory, WebSocketFactory>();
 builder.Services.AddSingleton<IHttpRequestProxyService, HttpRequestProxyService>();
 builder.Services.AddSingleton<ICache, Cache>();
 builder.Services.AddSingleton<IServerBusService, ServerBusService>();
+builder.Services.AddSingleton<IAppProjectConsumerService, AppProjectConsumerService>();
 builder.Services.AddHostedService<Worker>();
 
 builder.Services.AddHttpClient(NamedHttpClients.Default).ConfigurePrimaryHttpMessageHandler(_ =>

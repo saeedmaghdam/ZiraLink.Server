@@ -34,6 +34,7 @@ namespace ZiraLink.Server.Services
                 byte[] body = ea.Body.ToArray();
                 var useportUsername = Encoding.UTF8.GetString(ea.BasicProperties.Headers["useport_username"] as byte[]);
                 var useportPort = int.Parse(ea.BasicProperties.Headers["useport_port"].ToString()!);
+                var useportConnectionId = Encoding.UTF8.GetString(ea.BasicProperties.Headers["useport_connectionid"] as byte[]);
 
                 if (!_cache.TryGetAppProject(useportUsername, useportPort, out var appProject))
                 {
@@ -61,6 +62,7 @@ namespace ZiraLink.Server.Services
                 {
                     { "useport_username", useportUsername },
                     { "useport_port", useportPort },
+                    { "useport_connectionid", useportConnectionId },
                     { "sharedport_port", destinationAppProject.InternalPort }
                 };
 
@@ -84,6 +86,7 @@ namespace ZiraLink.Server.Services
                 byte[] body = ea.Body.ToArray();
                 var useportUsername = Encoding.UTF8.GetString(ea.BasicProperties.Headers["useport_username"] as byte[]);
                 var useportPort = int.Parse(ea.BasicProperties.Headers["useport_port"].ToString()!);
+                var useportConnectionId = Encoding.UTF8.GetString(ea.BasicProperties.Headers["useport_connectionid"] as byte[]);
 
                 if (!_cache.TryGetAppProject(useportUsername, useportPort, out var appProject))
                 {
@@ -98,7 +101,8 @@ namespace ZiraLink.Server.Services
                 properties.Headers = new Dictionary<string, object>()
                 {
                     { "useport_username", useportUsername },
-                    { "useport_port", useportPort }
+                    { "useport_port", useportPort },
+                    { "useport_connectionid", useportConnectionId }
                 };
 
                 _channel.BasicPublish(string.Empty, destinationQueue, properties, body);
