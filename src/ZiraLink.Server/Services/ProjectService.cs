@@ -1,6 +1,4 @@
-﻿using RabbitMQ.Client;
-using RabbitMQ.Client.Events;
-using ZiraLink.Server.Framework.Services;
+﻿using ZiraLink.Server.Framework.Services;
 using ZiraLink.Server.Models;
 
 namespace ZiraLink.Server.Services
@@ -10,14 +8,12 @@ namespace ZiraLink.Server.Services
         private readonly IZiraApiClient _ziraApiClient;
         private readonly IConfiguration _configuration;
         private readonly ICache _cache;
-        private readonly IModel _channel;
 
-        public ProjectService(IZiraApiClient ziraApiClient, IConfiguration configuration, ICache cache, IModel channel)
+        public ProjectService(IZiraApiClient ziraApiClient, IConfiguration configuration, ICache cache)
         {
             _ziraApiClient = ziraApiClient;
             _configuration = configuration;
             _cache = cache;
-            _channel = channel;
         }
 
         public Project GetByHost(string host)
@@ -29,38 +25,7 @@ namespace ZiraLink.Server.Services
             return project;
         }
 
-        public async Task InitializeAsync(CancellationToken cancellationToken)
-        {
-            var queueName = $"api_to_server_external_bus";
-
-            _channel.QueueDeclare(queue: queueName,
-                durable: false,
-                exclusive: false,
-                autoDelete: false,
-                arguments: null);
-
-            var external_bus_consumer = new AsyncEventingBasicConsumer(_channel);
-            external_bus_consumer.Received += async (model, ea) =>
-            {
-                _channel.BasicAck(ea.DeliveryTag, false);
-
-                try
-                {
-                    await UpdateProjectsAsync(cancellationToken);
-                }
-                catch
-                {
-                    // ignored
-                }
-
-                await Task.Yield();
-            };
-
-            await UpdateProjectsAsync(cancellationToken);
-            _channel.BasicConsume(queue: queueName, autoAck: false, consumer: external_bus_consumer);
-        }
-
-        private async Task UpdateProjectsAsync(CancellationToken cancellationToken)
+        public async Task UpdateProjectsAsync(CancellationToken cancellationToken)
         {
             var projects = await _ziraApiClient.GetProjectsAsync(CancellationToken.None);
 

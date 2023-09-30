@@ -18,7 +18,7 @@ namespace ZiraLink.Server.UnitTests
             // Arrange
             var host = "ziralink.local";
             var cacheMock = new Mock<ICache>();
-            var projectService = new ProjectService(null, null, cacheMock.Object, null);
+            var projectService = new ProjectService(null, null, cacheMock.Object);
 
             // Act
             var action = () => projectService.GetByHost(host);
@@ -35,7 +35,7 @@ namespace ZiraLink.Server.UnitTests
         {
             // Arrange
             var cacheMock = new Mock<ICache>();
-            var projectService = new ProjectService(null, null, cacheMock.Object, null);
+            var projectService = new ProjectService(null, null, cacheMock.Object);
 
             // Act
             var action = () => projectService.GetByHost("");
@@ -55,7 +55,7 @@ namespace ZiraLink.Server.UnitTests
 
             var projectViewId = Guid.NewGuid();
             cacheMock.Setup(m => m.TryGetProject(host, out It.Ref<Project>.IsAny)).Returns(true);
-            var projectService = new ProjectService(null, null, cacheMock.Object, null);
+            var projectService = new ProjectService(null, null, cacheMock.Object);
 
             // Act
             var action = () => projectService.GetByHost(host);
@@ -65,36 +65,6 @@ namespace ZiraLink.Server.UnitTests
             Assert.Null(exception);
             cacheMock.Verify(m => m.TryGetProject(host, out It.Ref<Project>.IsAny), Times.Once);
             cacheMock.VerifyNoOtherCalls();
-        }
-
-        [Fact]
-        public async Task Initialize_ShouldSetupQueueAndInitializeConsumer()
-        {
-            // Arrange
-            var configurationMock = new Mock<IConfiguration>();
-            var ziraApiClientMock = new Mock<IZiraApiClient>();
-            var cacheMock = new Mock<ICache>();
-            var channelMock = new Mock<IModel>();
-            var cancellationToken = CancellationToken.None;
-            var projectService = new ProjectService(ziraApiClientMock.Object, configurationMock.Object, cacheMock.Object, channelMock.Object);
-            var queueName = "api_to_server_external_bus";
-            var projects = new List<Project>() { new Project { State = Enums.ProjectState.Active, DomainType = DomainType.Custom, Domain = "ziralink.local" } };
-
-
-            foreach(var project in projects)
-                cacheMock.Setup(m => m.SetProject(project.GetProjectHost(configurationMock.Object), project)).Returns(project);
-            ziraApiClientMock.Setup(m => m.GetProjectsAsync(cancellationToken)).ReturnsAsync(projects);
-
-            // Act
-            await projectService.InitializeAsync(cancellationToken);
-
-            // Assert
-            ziraApiClientMock.Verify(m => m.GetProjectsAsync(cancellationToken), Times.Once);
-            foreach (var project in projects)
-                cacheMock.Verify(m => m.SetProject(project.GetProjectHost(configurationMock.Object), project), Times.Once);
-            cacheMock.VerifyNoOtherCalls();
-            channelMock.Verify(m => m.QueueDeclare(queueName, false, false, false, null), Times.Once);
-            channelMock.Verify(m => m.BasicConsume(queueName, false, "", false, false, null, It.IsAny<IBasicConsumer>()), Times.Once);
         }
     }
 }

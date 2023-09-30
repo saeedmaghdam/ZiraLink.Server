@@ -9,20 +9,20 @@ namespace ZiraLink.Server.Services
 {
     public class HttpRequestProxyService : IHttpRequestProxyService
     {
-        private readonly IProjectService _projectService;
+        private readonly IApiExternalBusService _apiExternalBusService;
         private readonly IModel _channel;
         private readonly ResponseCompletionSources _responseCompletionSources;
 
-        public HttpRequestProxyService(IProjectService projectService, IModel channel, ResponseCompletionSources responseCompletionSources)
+        public HttpRequestProxyService(IApiExternalBusService apiExternalBusService, IModel channel, ResponseCompletionSources responseCompletionSources)
         {
-            _projectService = projectService;
+            _apiExternalBusService = apiExternalBusService;
             _channel = channel;
             _responseCompletionSources = responseCompletionSources;
         }
 
         public async Task InitializeConsumerAsync(CancellationToken cancellationToken)
         {
-            await _projectService.InitializeAsync(cancellationToken);
+            await _apiExternalBusService.InitializeAsync(cancellationToken);
 
             var queueName = "response_bus";
             var exchangeName = "response";

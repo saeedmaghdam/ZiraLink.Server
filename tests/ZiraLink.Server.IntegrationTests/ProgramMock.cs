@@ -60,11 +60,14 @@ builder.Services.AddSingleton(serviceProvider =>
 builder.Services.AddSingleton<ResponseCompletionSources>();
 builder.Services.AddSingleton<IZiraApiClient, ZiraApiClient>();
 builder.Services.AddSingleton<IProjectService, ProjectService>();
+builder.Services.AddSingleton<IAppProjectService, AppProjectService>();
+builder.Services.AddSingleton<IApiExternalBusService, ApiExternalBusService>();
 builder.Services.AddSingleton<IIdentityService, IdentityService>();
 builder.Services.AddSingleton<IWebSocketService, WebSocketService>();
 builder.Services.AddSingleton<IWebSocketFactory, WebSocketFactory>();
 builder.Services.AddSingleton<IHttpRequestProxyService, HttpRequestProxyService>();
 builder.Services.AddSingleton<ICache, Cache>();
+builder.Services.AddSingleton<IServerBusService, ServerBusService>();
 builder.Services.AddHostedService<Worker>();
 
 builder.Services.AddHttpClient(NamedHttpClients.Default).ConfigurePrimaryHttpMessageHandler(_ =>

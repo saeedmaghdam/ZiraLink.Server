@@ -16,17 +16,17 @@ namespace ZiraLink.Server.UnitTests
             var queueName = $"response_bus";
             var exchangeName = "response";
 
-            var projectServiceMock = new Mock<IProjectService>();
+            var apiExternalBusService = new Mock<IApiExternalBusService>();
             var channelMock = new Mock<IModel>();
             var responseCompletionSourcesMock = new Mock<ResponseCompletionSources>();
 
-            var httpRequestProxyService = new HttpRequestProxyService(projectServiceMock.Object, channelMock.Object, responseCompletionSourcesMock.Object);
+            var httpRequestProxyService = new HttpRequestProxyService(apiExternalBusService.Object, channelMock.Object, responseCompletionSourcesMock.Object);
 
             // Act
             await httpRequestProxyService.InitializeConsumerAsync(CancellationToken.None);
 
             // Assert
-            projectServiceMock.Verify(m => m.InitializeAsync(It.IsAny<CancellationToken>()), Times.Once);
+            apiExternalBusService.Verify(m => m.InitializeAsync(It.IsAny<CancellationToken>()), Times.Once);
             channelMock.Verify(m => m.ExchangeDeclare(exchangeName, "direct", false, false, null), Times.Once);
             channelMock.Verify(m => m.QueueDeclare(queueName, false, false, false, null), Times.Once);
             channelMock.Verify(m => m.QueueBind(queueName, exchangeName, "", null), Times.Once);
