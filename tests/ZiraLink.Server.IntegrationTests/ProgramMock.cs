@@ -7,7 +7,6 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Org.BouncyCastle.Asn1.X509;
 using RabbitMQ.Client;
 using Serilog;
 using ZiraLink.Server;
@@ -108,7 +107,11 @@ var app = builder.Build();
 app.Services.GetRequiredService<IWebSocketService>().InitializeConsumer();
 
 // Configure the HTTP request pipeline.
-app.UseHttpsRedirection();
+if (string.IsNullOrWhiteSpace(Configuration["ZIRALINK_USE_HTTP"]) || !bool.Parse(Configuration["ZIRALINK_USE_HTTP"]!))
+{
+    app.UseHttpsRedirection();
+}
+
 app.UseWebSockets();
 app.UseMiddleware<HttpRequestProxyMiddleware>();
 app.UseMiddleware<WebSocketProxyMiddleware>();

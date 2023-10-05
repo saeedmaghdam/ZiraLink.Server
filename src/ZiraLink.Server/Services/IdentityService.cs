@@ -1,4 +1,5 @@
-﻿using IdentityModel.Client;
+﻿using System.Net;
+using IdentityModel.Client;
 using ZiraLink.Server.Enums;
 using ZiraLink.Server.Framework.Services;
 
@@ -21,7 +22,14 @@ namespace ZiraLink.Server.Services
 
             // discover endpoints from metadata
             var uri = new Uri(_configuration["ZIRALINK_IDS_URL"]!);
-            var disco = await client.GetDiscoveryDocumentAsync(uri.ToString(), cancellationToken);
+            var disco = await client.GetDiscoveryDocumentAsync(new DiscoveryDocumentRequest
+            {
+                Address = uri.ToString(),
+                Policy =
+                {
+                    RequireHttps = string.IsNullOrWhiteSpace(_configuration["ZIRALINK_USE_HTTP"]) || bool.Parse(_configuration["ZIRALINK_USE_HTTP"]) == false
+                }
+            }, cancellationToken);
             if (disco.IsError)
                 throw new ApplicationException("Discovery not found");
 

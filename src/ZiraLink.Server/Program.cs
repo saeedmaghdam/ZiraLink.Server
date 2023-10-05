@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.HttpOverrides;
 using RabbitMQ.Client;
 using Serilog;
 using ZiraLink.Server;
+using ZiraLink.Server.Enums;
 using ZiraLink.Server.Framework.Services;
 using ZiraLink.Server.Middlewares;
 using ZiraLink.Server.Services;
@@ -67,7 +68,7 @@ builder.Services.AddSingleton<IServerBusService, ServerBusService>();
 builder.Services.AddSingleton<IAppProjectConsumerService, AppProjectConsumerService>();
 builder.Services.AddHostedService<Worker>();
 
-builder.Services.AddHttpClient();
+builder.Services.AddHttpClient(NamedHttpClients.Default);
 
 builder.Services.Configure<ForwardedHeadersOptions>(options =>
 {
@@ -85,7 +86,11 @@ var app = builder.Build();
 app.Services.GetRequiredService<IWebSocketService>().InitializeConsumer();
 
 // Configure the HTTP request pipeline.
-app.UseHttpsRedirection();
+if (string.IsNullOrWhiteSpace(Configuration["ZIRALINK_USE_HTTP"]) || !bool.Parse(Configuration["ZIRALINK_USE_HTTP"]!))
+{
+    app.UseHttpsRedirection();
+}
+
 app.UseWebSockets();
 app.UseMiddleware<HttpRequestProxyMiddleware>();
 app.UseMiddleware<WebSocketProxyMiddleware>();
