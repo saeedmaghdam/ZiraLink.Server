@@ -44,7 +44,7 @@ namespace ZiraLink.Server.IntegrationTests.Fixtures
                 .Build();
 
             _cancellationTokenSource = new CancellationTokenSource(TimeSpan.FromMinutes(5));
-            _certificatePath = Path.Combine(pathToExe, "certs", "s3d-local-ziralink-server.pfx");
+            _certificatePath = Path.Combine(pathToExe, "certs", "s3d-localhost-server.pfx");
             _certificatePassword = _configuration["ASPNETCORE_Kestrel__Certificates__Default__Password"]!;
 
             InitializeNetwork();
@@ -135,7 +135,7 @@ namespace ZiraLink.Server.IntegrationTests.Fixtures
               .WithEnvironment("ASPNETCORE_ENVIRONMENT", "Test")
               .WithEnvironment("ASPNETCORE_URLS", "http://+:10050;https://+:10051")
               .WithEnvironment("ASPNETCORE_HTTPS_PORT", "10051")
-              .WithEnvironment("ASPNETCORE_Kestrel__Certificates__Default__Path", "/app/certs/s3d-local-ziralink-server.pfx")
+              .WithEnvironment("ASPNETCORE_Kestrel__Certificates__Default__Path", "/app/certs/s3d-localhost-server.pfx")
               .WithEnvironment("ASPNETCORE_Kestrel__Certificates__Default__Password", CertificatePassword)
               .WithWaitStrategy(Wait.ForUnixContainer().UntilHttpRequestIsSucceeded(req => req
                 .ForPort(10050)
@@ -160,12 +160,12 @@ namespace ZiraLink.Server.IntegrationTests.Fixtures
               .WithEnvironment("ASPNETCORE_ENVIRONMENT", "Test")
               .WithEnvironment("ZIRALINK_CERT_THUMBPRINT_LOCALHOST", _configuration["ZIRALINK_CERT_THUMBPRINT_LOCALHOST"]!)
               .WithEnvironment("ZIRALINK_CONNECTIONSTRINGS_DB", "Data Source=/app/database.db")
-              .WithEnvironment("ZIRALINK_ISSUER_URL", $"https://ids.ziralink.local:5501")
-              .WithEnvironment("ZIRALINK_API_URL", $"https://api.ziralink.local:6501")
-              .WithEnvironment("ZIRALINK_CLIENT_URL", $"https://client.ziralink.local:8501")
+              .WithEnvironment("ZIRALINK_ISSUER_URL", $"https://host.docker.internal:5501")
+              .WithEnvironment("ZIRALINK_API_URL", $"https://host.docker.internal:6501")
+              .WithEnvironment("ZIRALINK_CLIENT_URL", $"https://host.docker.internal:8501")
               .WithEnvironment("ASPNETCORE_URLS", "http://+:5500;https://+:5501")
               .WithEnvironment("ASPNETCORE_HTTPS_PORT", "5501")
-              .WithEnvironment("ASPNETCORE_Kestrel__Certificates__Default__Path", "/app/certs/s3d-local-ziralink-server.pfx")
+              .WithEnvironment("ASPNETCORE_Kestrel__Certificates__Default__Path", "/app/certs/s3d-localhost-server.pfx")
               .WithEnvironment("ASPNETCORE_Kestrel__Certificates__Default__Password", CertificatePassword)
               .WithWaitStrategy(Wait.ForUnixContainer().UntilHttpRequestIsSucceeded(req => req
                 .ForPort(5500)
@@ -193,12 +193,12 @@ namespace ZiraLink.Server.IntegrationTests.Fixtures
               .WithEnvironment("ZIRALINK_CONNECTIONSTRINGS_RABBITMQ", $"amqp://user:Pass123$@rabbitmq:5672/")
               .WithEnvironment("ZIRALINK_CONNECTIONSTRINGS_REDIS", $"redis:6379")
               .WithEnvironment("ZIRALINK_REDIS_PASSWORD", "")
-              .WithEnvironment("ZIRALINK_URL_IDS", $"https://ids.ziralink.local:5501")
-              .WithEnvironment("ZIRALINK_REDIRECTURI", "https://api.ziralink.local:6501/signin-result")
-              .WithEnvironment("ZIRALINK_WEB_URL", "https://ziralink.local:4501")
+              .WithEnvironment("ZIRALINK_URL_IDS", $"https://host.docker.internal:5501")
+              .WithEnvironment("ZIRALINK_REDIRECTURI", "https://host.docker.internal:6501/signin-result")
+              .WithEnvironment("ZIRALINK_WEB_URL", "https://host.docker.internal:4501")
               .WithEnvironment("ASPNETCORE_URLS", "http://+:6500;https://+:6501")
               .WithEnvironment("ASPNETCORE_HTTPS_PORT", "6501")
-              .WithEnvironment("ASPNETCORE_Kestrel__Certificates__Default__Path", "/app/certs/s3d-local-ziralink-server.pfx")
+              .WithEnvironment("ASPNETCORE_Kestrel__Certificates__Default__Path", "/app/certs/s3d-localhost-server.pfx")
               .WithEnvironment("ASPNETCORE_Kestrel__Certificates__Default__Password", CertificatePassword)
               .WithWaitStrategy(Wait.ForUnixContainer().UntilHttpRequestIsSucceeded(req => req
                 .ForPort(6500)
@@ -223,10 +223,10 @@ namespace ZiraLink.Server.IntegrationTests.Fixtures
               .WithEnvironment("ASPNETCORE_ENVIRONMENT", "Test")
               .WithEnvironment("ZIRALINK_CERT_THUMBPRINT_LOCALHOST", _configuration["ZIRALINK_CERT_THUMBPRINT_LOCALHOST"]!)
               .WithEnvironment("ZIRALINK_CONNECTIONSTRINGS_RABBITMQ", $"amqp://user:Pass123$@rabbitmq:5672/")
-              .WithEnvironment("ZIRALINK_URL_IDS", $"https://ids.ziralink.local:5501")
+              .WithEnvironment("ZIRALINK_URL_IDS", $"https://host.docker.internal:5501")
               .WithEnvironment("ASPNETCORE_Kestrel__Endpoints__Http__Url", $"http://+:8500")
               .WithEnvironment("ASPNETCORE_Kestrel__Endpoints__HttpsInlineCertFile__Url", $"https://+:8501")
-              .WithEnvironment("ASPNETCORE_Kestrel__Endpoints__HttpsInlineCertFile__Certificate__Path", "/app/certs/s3d-local-ziralink-server.pfx")
+              .WithEnvironment("ASPNETCORE_Kestrel__Endpoints__HttpsInlineCertFile__Certificate__Path", "/app/certs/s3d-localhost-server.pfx")
               .WithEnvironment("ASPNETCORE_Kestrel__Endpoints__HttpsInlineCertFile__Certificate__Password", CertificatePassword)
               .WithWaitStrategy(Wait.ForUnixContainer().UntilHttpRequestIsSucceeded(req => req
                 .ForPort(8500)
