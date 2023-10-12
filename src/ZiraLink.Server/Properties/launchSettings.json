@@ -14,15 +14,17 @@
       "dotnetRunMessages": true,
       "launchBrowser": false,
       "launchUrl": "",
-      "applicationUrl": "https://localhost:7001",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development",
+        "ZIRALINK_CERT_THUMBPRINT_LOCALHOST": "29FB52C6A8D8CB95424F0D158D1047F9794B4AB6",
         "ZIRALINK_CONNECTIONSTRINGS_RABBITMQ": "amqp://user:Pass123$@localhost:5772/",
         "ZIRALINK_DEFAULT_DOMAIN": ".app.ziralink.local:7001",
         "ZIRALINK_API_URL": "https://api.ziralink.local:6001/",
         "ZIRALINK_IDS_URL": "https://ids.ziralink.local:5001/",
-        "ASPNETCORE_Kestrel__Certificates__Default__Password": "zira_cert",
-        "ASPNETCORE_Kestrel__Certificates__Default__Path": "server.pfx"
+        "ASPNETCORE_URLS": "https://api.ziralink.local:7001",
+        "ASPNETCORE_HTTPS_PORT": "7001",
+        "ASPNETCORE_Kestrel__Certificates__Default__Password": "Hello#rt",
+        "ASPNETCORE_Kestrel__Certificates__Default__Path": "../../certs/s3d-local-ziralink-server.pfx"
       }
     },
     "IIS Express": {

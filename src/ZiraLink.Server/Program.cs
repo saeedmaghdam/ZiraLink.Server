@@ -13,7 +13,6 @@ using ZiraLink.Server.Services;
 var builder = WebApplication.CreateBuilder(args);
 
 var pathToExe = Path.GetDirectoryName(Assembly.GetEntryAssembly()!.Location);
-Directory.SetCurrentDirectory(pathToExe!);
 
 IConfiguration Configuration = new ConfigurationBuilder()
     .SetBasePath(pathToExe)
@@ -31,7 +30,7 @@ if (Configuration["ASPNETCORE_ENVIRONMENT"] == "Test")
 {
     ServicePointManager.ServerCertificateValidationCallback = (sender, certificate, chain, sslPolicyErrors) =>
     {
-        string expectedThumbprint = "10CE57B0083EBF09ED8E53CF6AC33D49B3A76414";
+        string expectedThumbprint = Configuration["ZIRALINK_CERT_THUMBPRINT_LOCALHOST"]!;
         if (certificate!.GetCertHashString() == expectedThumbprint)
             return true;
 

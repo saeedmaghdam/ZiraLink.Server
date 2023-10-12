@@ -18,7 +18,6 @@ using ZiraLink.Server.Services;
 var builder = WebApplication.CreateBuilder();
 
 var pathToExe = Path.GetDirectoryName(Assembly.GetEntryAssembly()!.Location);
-Directory.SetCurrentDirectory(pathToExe!);
 
 IConfiguration Configuration = new ConfigurationBuilder()
     .SetBasePath(pathToExe)
@@ -34,7 +33,7 @@ builder.Host.UseSerilog();
 // Add services to the container.
 ServicePointManager.ServerCertificateValidationCallback = (sender, certificate, chain, sslPolicyErrors) =>
 {
-    string expectedThumbprint = "10CE57B0083EBF09ED8E53CF6AC33D49B3A76414";
+    string expectedThumbprint = Configuration["ZIRALINK_CERT_THUMBPRINT_LOCALHOST"]!;
     if (certificate!.GetCertHashString() == expectedThumbprint)
         return true;
 
@@ -75,7 +74,7 @@ builder.Services.AddHttpClient(NamedHttpClients.Default).ConfigurePrimaryHttpMes
     var handler = new HttpClientHandler();
     handler.ServerCertificateCustomValidationCallback = (sender, certificate, chain, sslPolicyErrors) =>
     {
-        string expectedThumbprint = "10CE57B0083EBF09ED8E53CF6AC33D49B3A76414";
+        string expectedThumbprint = Configuration["ZIRALINK_CERT_THUMBPRINT_LOCALHOST"]!;
         if (certificate!.GetCertHashString() == expectedThumbprint)
             return true;
 
@@ -86,7 +85,7 @@ builder.Services.AddHttpClient(NamedHttpClients.Default).ConfigurePrimaryHttpMes
     };
     handler.ClientCertificateOptions = ClientCertificateOption.Manual;
     handler.SslProtocols = SslProtocols.Tls12;
-    handler.ClientCertificates.Add(new X509Certificate2(Path.Combine(pathToExe, "server.pfx"), "son"));
+    handler.ClientCertificates.Add(new X509Certificate2(Path.Combine(pathToExe, "certs", "s3d-local-ziralink-server.pfx"), Configuration["ASPNETCORE_Kestrel__Certificates__Default__Password"]));
 
     return handler;
 });
