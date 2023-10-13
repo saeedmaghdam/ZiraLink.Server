@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "ziralink-server.fullname" . }}
+data:
+  ASPNETCORE_ENVIRONMENT: "{{ .Values.environmentVariables.environment }}"
+  ZIRALINK_DEFAULT_DOMAIN: "{{ .Values.environmentVariables.defaultDomain }}"
+  ZIRALINK_API_URL: "{{ .Values.environmentVariables.apiUrl }}"
+  ZIRALINK_IDS_URL: "{{ .Values.environmentVariables.idsUrl }}"
+  ASPNETCORE_URLS: "{{ .Values.environmentVariables.aspNetCoreUrls }}"
+  ASPNETCORE_HTTPS_PORT: "{{ .Values.service.port }}"
+  ASPNETCORE_Kestrel__Certificates__Default__Password: "{{ .Values.environmentVariables.certificatePassword }}"
+  ASPNETCORE_Kestrel__Certificates__Default__Path: "{{ .Values.environmentVariables.certificatePath }}"
