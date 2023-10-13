@@ -85,7 +85,7 @@ builder.Services.AddHttpClient(NamedHttpClients.Default).ConfigurePrimaryHttpMes
     };
     handler.ClientCertificateOptions = ClientCertificateOption.Manual;
     handler.SslProtocols = SslProtocols.Tls12;
-    handler.ClientCertificates.Add(new X509Certificate2(Path.Combine(pathToExe, "certs", "s3d-local-ziralink-server.pfx"), Configuration["ASPNETCORE_Kestrel__Certificates__Default__Password"]));
+    handler.ClientCertificates.Add(new X509Certificate2(Path.Combine(pathToExe, "certs", "s3d-me-localdev-server.pfx"), Configuration["ASPNETCORE_Kestrel__Certificates__Default__Password"]));
 
     return handler;
 });
